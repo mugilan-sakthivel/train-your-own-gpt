@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backprop, Animated — Forward fills data, Backward fills grad</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d2130; --ink:#e8ebf2; --muted:#9aa3b7;
+    --line:#2a2f40; --accent:#5b8cff; --green:#36d399; --orange:#fbbd23; --chip:#232838; --maxw:900px;
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px 120px}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%, rgba(54,211,153,.2), transparent 60%);padding:60px 20px 36px;text-align:center}
+  header.hero h1{font-size:38px;line-height:1.12;margin:0 0 12px;letter-spacing:-.5px}
+  header.hero p{color:var(--muted);max-width:640px;margin:0 auto;font-size:18px}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--green);padding:6px 14px;border-radius:999px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:18px}
+  h2{font-size:26px;margin:56px 0 6px;letter-spacing:-.3px}
+  h2 .n{color:var(--green);font-weight:800;margin-right:10px}
+  p{margin:14px 0}.muted{color:var(--muted)}strong{color:#fff}
+  .green{color:var(--green);font-weight:600}.orange{color:var(--orange);font-weight:600}
+  code{background:#0b0d13;border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:14px;color:#bcd0ff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin:22px 0}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin:6px 0 14px;font-size:14px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:13px;height:13px;border-radius:4px;display:inline-block}
+  svg{max-width:100%;height:auto;display:block;margin:0 auto}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+  button{background:var(--green);color:#04210f;border:0;border-radius:10px;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer}
+  button.ghost{background:var(--chip);border:1px solid var(--line);color:var(--ink);font-weight:600}
+  button:active{transform:translateY(1px)}
+  .caption{margin-top:16px;background:#0b0d13;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15.5px;min-height:54px;line-height:1.55}
+  .caption b{color:#fff}
+  .step-tag{display:inline-block;font-size:12px;letter-spacing:.5px;text-transform:uppercase;padding:2px 9px;border-radius:6px;margin-right:8px}
+  .tag-fwd{background:rgba(54,211,153,.16);color:var(--green)}
+  .tag-bwd{background:rgba(251,189,35,.16);color:var(--orange)}
+  .tag-info{background:var(--chip);color:var(--muted)}
+  .footer{text-align:center;color:var(--muted);margin-top:70px;font-size:14px}
+  .navlinks{display:flex;justify-content:space-between;margin-top:46px;font-size:15px}
+  .navlinks a{color:var(--green);text-decoration:none}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="badge">Animated · Step by Step</div>
+  <h1>Backprop, Animated</h1>
+  <p><span class="green">Forward fills the <b>data</b></span> (left → right). <span class="orange">Backward fills the <b>grad</b></span> (right → left). Press the buttons and watch every box light up in order — first one weight, then a whole little network.</p>
+</header>
+<div class="wrap">
+
+<!-- recap: the box -->
+<h2><span class="n">1</span>Reminder: every box has two slots</h2>
+<p>Each circle/box in the animations below is a <code>Value</code> — and it holds two numbers: <span class="green">data</span> (its value) and <span class="orange">grad</span> (its effect on the error). Forward fills the first slot; backward fills the second.</p>
+<div class="card" style="text-align:center">
+<svg viewBox="0 0 360 150" width="360">
+  <rect x="90" y="25" width="180" height="100" rx="14" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/>
+  <text x="180" y="50" fill="#9aa3b7" font-size="13" text-anchor="middle">one Value box</text>
+  <rect x="108" y="62" width="144" height="24" rx="6" fill="#0b0d13" stroke="#36d399" stroke-width="1.5"/>
+  <text x="180" y="79" fill="#36d399" font-size="14" text-anchor="middle" font-family="monospace">data  (the value)</text>
+  <rect x="108" y="94" width="144" height="24" rx="6" fill="#0b0d13" stroke="#fbbd23" stroke-width="1.5"/>
+  <text x="180" y="111" fill="#fbbd23" font-size="14" text-anchor="middle" font-family="monospace">grad  (effect on error)</text>
+</svg>
+</div>
+
+<!-- ANIMATION 1: single weight trail -->
+<h2><span class="n">2</span>One weight: the trail <code>w → d → e</code></h2>
+<p>This is the <code>(w−10)²</code> example, broken into its two real steps: <code>d = w − 10</code>, then <code>e = d²</code> (the error). Watch <span class="green">data</span> fill going right, then <span class="orange">grad</span> fill coming back.</p>
+
+<div class="card">
+  <div class="legend">
+    <span><span class="dot" style="background:var(--green)"></span> forward — filling data</span>
+    <span><span class="dot" style="background:var(--orange)"></span> backward — filling grad</span>
+  </div>
+  <svg id="svg1" viewBox="0 0 760 300" width="760">
+    <!-- forward arrow (top, green) -->
+    <line x1="120" y1="70" x2="640" y2="70" stroke="#36d399" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#g1)"/>
+    <text x="380" y="58" fill="#36d399" font-size="13" text-anchor="middle">FORWARD · data flows this way →</text>
+    <!-- backward arrow (bottom, orange) -->
+    <line x1="640" y1="240" x2="120" y2="240" stroke="#fbbd23" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#o1)"/>
+    <text x="380" y="262" fill="#fbbd23" font-size="13" text-anchor="middle">← BACKWARD · grad flows this way</text>
+    <defs>
+      <marker id="g1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#36d399"/></marker>
+      <marker id="o1" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#fbbd23"/></marker>
+      <marker id="gr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5a627a"/></marker>
+    </defs>
+    <!-- connecting arrows + op labels -->
+    <line x1="180" y1="150" x2="290" y2="150" stroke="#5a627a" stroke-width="2" marker-end="url(#gr)"/>
+    <text x="235" y="140" fill="#bcd0ff" font-size="13" text-anchor="middle" font-family="monospace">− 10</text>
+    <line x1="410" y1="150" x2="520" y2="150" stroke="#5a627a" stroke-width="2" marker-end="url(#gr)"/>
+    <text x="465" y="140" fill="#bcd0ff" font-size="13" text-anchor="middle" font-family="monospace">square</text>
+
+    <!-- box w -->
+    <g>
+      <rect id="box_w" x="70" y="110" width="110" height="80" rx="12" fill="#1d2130" stroke="#2a2f40" stroke-width="2"/>
+      <text x="125" y="103" fill="#fff" font-size="15" text-anchor="middle">w (weight)</text>
+      <text id="w_data" x="125" y="145" fill="#36d399" font-size="14" text-anchor="middle" font-family="monospace">data = ?</text>
+      <text id="w_grad" x="125" y="172" fill="#fbbd23" font-size="14" text-anchor="middle" font-family="monospace">grad = ?</text>
+    </g>
+    <!-- box d -->
+    <g>
+      <rect id="box_d" x="300" y="110" width="110" height="80" rx="12" fill="#1d2130" stroke="#2a2f40" stroke-width="2"/>
+      <text x="355" y="103" fill="#fff" font-size="15" text-anchor="middle">d</text>
+      <text id="d_data" x="355" y="145" fill="#36d399" font-size="14" text-anchor="middle" font-family="monospace">data = ?</text>
+      <text id="d_grad" x="355" y="172" fill="#fbbd23" font-size="14" text-anchor="middle" font-family="monospace">grad = ?</text>
+    </g>
+    <!-- box e -->
+    <g>
+      <rect id="box_e" x="530" y="110" width="110" height="80" rx="12" fill="#1d2130" stroke="#2a2f40" stroke-width="2"/>
+      <text x="585" y="103" fill="#fff" font-size="15" text-anchor="middle">e (error)</text>
+      <text id="e_data" x="585" y="145" fill="#36d399" font-size="14" text-anchor="middle" font-family="monospace">data = ?</text>
+      <text id="e_grad" x="585" y="172" fill="#fbbd23" font-size="14" text-anchor="middle" font-family="monospace">grad = ?</text>
+    </g>
+  </svg>
+  <div class="caption" id="cap1"></div>
+  <div class="controls">
+    <button class="ghost" id="b1prev">◂ Back</button>
+    <button id="b1next">Next ▸</button>
+    <button class="ghost" id="b1auto">▶ Auto</button>
+    <button class="ghost" id="b1reset">Reset</button>
+  </div>
+</div>
+
+<!-- ANIMATION 2: the network -->
+<h2><span class="n">3</span>Now scale up: a 13-weight network</h2>
+<p>Exactly the same two phases — just more boxes. This little network has <strong>2 inputs → 3 hidden → 1 output</strong> = <strong>13 parameters</strong> (9 weights + 4 biases). Watch the <span class="green">forward wave</span> fill all the data, then the <span class="orange">backward wave</span> push grad back through <em>every</em> weight.</p>
+
+<div class="card">
+  <div class="legend">
+    <span><span class="dot" style="background:var(--green)"></span> forward wave (data)</span>
+    <span><span class="dot" style="background:var(--orange)"></span> backward wave (grad)</span>
+    <span><span class="dot" style="background:#2a2f40"></span> not yet reached</span>
+  </div>
+  <svg id="svg2" viewBox="0 0 760 360" width="760">
+    <!-- edges: input->hidden -->
+    <line id="e_i1h1" x1="92" y1="130" x2="262" y2="70"  stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_i1h2" x1="92" y1="130" x2="262" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_i1h3" x1="92" y1="130" x2="262" y2="270" stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_i2h1" x1="92" y1="230" x2="262" y2="70"  stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_i2h2" x1="92" y1="230" x2="262" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_i2h3" x1="92" y1="230" x2="262" y2="270" stroke="#2a2f40" stroke-width="2.5"/>
+    <!-- edges: hidden->output -->
+    <line id="e_h1o" x1="318" y1="70"  x2="478" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_h2o" x1="318" y1="170" x2="478" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+    <line id="e_h3o" x1="318" y1="270" x2="478" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+    <!-- edge: output->loss -->
+    <line id="e_oL" x1="522" y1="170" x2="618" y2="170" stroke="#2a2f40" stroke-width="2.5"/>
+
+    <!-- nodes -->
+    <circle id="n_i1" cx="70" cy="130" r="22" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_i2" cx="70" cy="230" r="22" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_h1" cx="290" cy="70"  r="22" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_h2" cx="290" cy="170" r="22" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_h3" cx="290" cy="270" r="22" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_o"  cx="500" cy="170" r="24" fill="#1d2130" stroke="#2a2f40" stroke-width="2.5"/>
+    <circle id="n_L"  cx="650" cy="170" r="26" fill="#1d2130" stroke="#2a2f40" stroke-width="3"/>
+
+    <!-- labels -->
+    <text x="70"  y="135" fill="#cfd5e6" font-size="13" text-anchor="middle">in₁</text>
+    <text x="70"  y="235" fill="#cfd5e6" font-size="13" text-anchor="middle">in₂</text>
+    <text x="290" y="75"  fill="#cfd5e6" font-size="13" text-anchor="middle">h₁</text>
+    <text x="290" y="175" fill="#cfd5e6" font-size="13" text-anchor="middle">h₂</text>
+    <text x="290" y="275" fill="#cfd5e6" font-size="13" text-anchor="middle">h₃</text>
+    <text x="500" y="175" fill="#cfd5e6" font-size="13" text-anchor="middle">out</text>
+    <text x="650" y="175" fill="#cfd5e6" font-size="13" text-anchor="middle">error</text>
+    <text x="70"  y="300" fill="#5a627a" font-size="12" text-anchor="middle">inputs</text>
+    <text x="290" y="312" fill="#5a627a" font-size="12" text-anchor="middle">hidden (3 neurons)</text>
+    <text x="650" y="215" fill="#5a627a" font-size="12" text-anchor="middle">loss</text>
+  </svg>
+  <div class="caption" id="cap2"></div>
+  <div class="controls">
+    <button class="ghost" id="b2prev">◂ Back</button>
+    <button id="b2next">Next ▸</button>
+    <button class="ghost" id="b2auto">▶ Auto</button>
+    <button class="ghost" id="b2reset">Reset</button>
+  </div>
+</div>
+
+<h2><span class="n">4</span>The takeaway</h2>
+<div class="card">
+<p style="margin:0">Both animations are the <strong>same machine</strong>:</p>
+<ul style="margin:12px 0 0;padding-left:20px">
+  <li style="margin:8px 0"><span class="green">FORWARD</span> — run left → right, filling every box's <strong>data</strong> (this computes the error).</li>
+  <li style="margin:8px 0"><span class="orange">BACKWARD</span> — start with <code>grad = 1</code> at the error, run right → left, multiplying local rates to fill every box's <strong>grad</strong>.</li>
+  <li style="margin:8px 0">Then nudge every weight: <code>new = old − step × grad</code>, and repeat.</li>
+</ul>
+<p style="margin:14px 0 0">One weight or 13 weights or 175 billion weights — <strong>identical process</strong>. The only thing that grows is the number of boxes. That's backpropagation.</p>
+</div>
+
+<div class="navlinks">
+  <a href="index.html">‹ Part 1 · Neural Networks</a>
+  <a href="deep-dive.html">Deep Dive ›</a>
+</div>
+<p class="footer">Press ▶ Auto on both. Watch the green wave go out, the orange wave come back. 🌊</p>
+</div>
+
+<script>
+// ===== Animation 1: single trail =====
+const steps1 = [
+  {tag:'info', cap:'<b>Empty boxes.</b> Every box has a <span class="green">data</span> slot and a <span class="orange">grad</span> slot — both unknown (?). We fill data going forward, grad coming back. Press <b>Next ▸</b>.'},
+  {set:{w_data:'4'}, hi:'w', dir:'f', tag:'fwd', cap:'<b>FORWARD ①</b> — put the weight in. <span class="green">w.data = 4</span> (our current guess).'},
+  {set:{d_data:'-6'}, hi:'d', dir:'f', tag:'fwd', cap:'<b>FORWARD ②</b> — apply the first step: <code>d = w − 10 = 4 − 10 = −6</code>. <span class="green">d.data = −6</span>.'},
+  {set:{e_data:'36'}, hi:'e', dir:'f', tag:'fwd', cap:'<b>FORWARD ③</b> — apply the second step: <code>e = d² = (−6)² = 36</code>. <span class="green">e.data = 36</span> — this is the error. Forward done.'},
+  {set:{e_grad:'1'}, hi:'e', dir:'b', tag:'bwd', cap:'<b>BACKWARD ① (the seed)</b> — start at the error: <span class="orange">e.grad = 1</span> (the error\'s effect on itself is always 1).'},
+  {set:{d_grad:'-12'}, hi:'d', dir:'b', tag:'bwd', cap:'<b>BACKWARD ②</b> — square step\'s local rate is <code>2×d = 2×(−6) = −12</code>. Multiply: <span class="orange">d.grad = (−12) × e.grad = −12 × 1 = −12</span>.'},
+  {set:{w_grad:'-12'}, hi:'w', dir:'b', tag:'bwd', cap:'<b>BACKWARD ③</b> — subtract step\'s local rate is <code>1</code>. Multiply: <span class="orange">w.grad = 1 × d.grad = 1 × (−12) = −12</span>. ✅'},
+  {tag:'info', cap:'<b>Done.</b> <span class="orange">w.grad = −12</span> — exactly what the hand formula <code>2(w−10)</code> gave, but the chain produced it automatically. The minus sign says: nudge the weight <b>up</b> to shrink the error.'},
+];
+let i1 = 0, t1 = null;
+const ids1 = ['w','d','e'];
+function render1(){
+  ids1.forEach(n=>{
+    const b=document.getElementById('box_'+n);
+    b.setAttribute('stroke','#2a2f40'); b.setAttribute('stroke-width','2');
+  });
+  const state={};
+  for(let k=0;k<=i1;k++) Object.assign(state, steps1[k].set||{});
+  function put(id, key, label, val){ document.getElementById(id).textContent = label+' = '+(state[key]!==undefined?state[key]:'?'); }
+  put('w_data','w_data','data'); put('w_grad','w_grad','grad');
+  put('d_data','d_data','data'); put('d_grad','d_grad','grad');
+  put('e_data','e_data','data'); put('e_grad','e_grad','grad');
+  const s=steps1[i1];
+  if(s.hi){ const b=document.getElementById('box_'+s.hi);
+    b.setAttribute('stroke', s.dir==='b'?'#fbbd23':'#36d399'); b.setAttribute('stroke-width','4'); }
+  const tagClass = s.tag==='fwd'?'tag-fwd':(s.tag==='bwd'?'tag-bwd':'tag-info');
+  const tagTxt = s.tag==='fwd'?'forward':(s.tag==='bwd'?'backward':'info');
+  document.getElementById('cap1').innerHTML = `<span class="step-tag ${tagClass}">${tagTxt}</span>`+s.cap;
+}
+function stop1(){ if(t1){clearInterval(t1);t1=null;document.getElementById('b1auto').textContent='▶ Auto';} }
+document.getElementById('b1next').onclick=()=>{ if(i1<steps1.length-1){i1++;render1();} };
+document.getElementById('b1prev').onclick=()=>{ if(i1>0){i1--;render1();} };
+document.getElementById('b1reset').onclick=()=>{ stop1(); i1=0; render1(); };
+document.getElementById('b1auto').onclick=function(){
+  if(t1){stop1();return;}
+  this.textContent='⏸ Pause';
+  t1=setInterval(()=>{ if(i1<steps1.length-1){i1++;render1();} else stop1(); }, 1700);
+};
+render1();
+
+// ===== Animation 2: the network =====
+const GREEN='#36d399', ORANGE='#fbbd23', GREY='#2a2f40';
+const allIds=['n_i1','n_i2','n_h1','n_h2','n_h3','n_o','n_L',
+  'e_i1h1','e_i1h2','e_i1h3','e_i2h1','e_i2h2','e_i2h3','e_h1o','e_h2o','e_h3o','e_oL'];
+const fwd=[
+  ['n_i1','n_i2'],
+  ['e_i1h1','e_i1h2','e_i1h3','e_i2h1','e_i2h2','e_i2h3','n_h1','n_h2','n_h3'],
+  ['e_h1o','e_h2o','e_h3o','n_o'],
+  ['e_oL','n_L'],
+];
+const bwd=[
+  ['n_L'],
+  ['e_oL','n_o'],
+  ['e_h1o','e_h2o','e_h3o','n_h1','n_h2','n_h3'],
+  ['e_i1h1','e_i1h2','e_i1h3','e_i2h1','e_i2h2','e_i2h3','n_i1','n_i2'],
+];
+const steps2=[
+  {phase:'intro', cap:'<b>The whole network, empty.</b> 13 weights/biases waiting. Same plan as one weight: forward fills data, backward fills grad. Press <b>Next ▸</b>.'},
+  {phase:'fwd', k:0, cap:'<b>FORWARD ①</b> — the two <span class="green">inputs</span> enter. Their data is set.'},
+  {phase:'fwd', k:1, cap:'<b>FORWARD ②</b> — each <span class="green">hidden neuron</span> computes <code>Σ(weight×input) + bias</code> then its activation. 6 weights used here. Data filled.'},
+  {phase:'fwd', k:2, cap:'<b>FORWARD ③</b> — the <span class="green">output neuron</span> combines the 3 hidden values (3 more weights). Data filled.'},
+  {phase:'fwd', k:3, cap:'<b>FORWARD ④</b> — the <span class="green">error</span> is computed at the very end. Forward pass complete — every data slot is full.'},
+  {phase:'bwd', k:0, cap:'<b>BACKWARD ① (seed)</b> — start at the <span class="orange">error</span>: grad = 1.'},
+  {phase:'bwd', k:1, cap:'<b>BACKWARD ②</b> — grad flows back to the <span class="orange">output</span> and its weights (multiply local rates).'},
+  {phase:'bwd', k:2, cap:'<b>BACKWARD ③</b> — grad flows into <span class="orange">every hidden neuron</span> and its 6 weights. The chain rule keeps multiplying backward.'},
+  {phase:'bwd', k:3, cap:'<b>BACKWARD ④</b> — grad reaches the first-layer weights. Now <span class="orange">every one of the 13 weights has its grad</span>.'},
+  {phase:'done', cap:'<b>Done.</b> Forward filled all data ➜ backward filled all grad. Identical to the single weight — just 13 boxes. Now nudge them all and repeat. <b>That is backprop.</b>'},
+];
+let i2=0, t2=null;
+function setC(id,color,w){ const el=document.getElementById(id); el.setAttribute('stroke',color); el.setAttribute('stroke-width',w); }
+function render2(){
+  allIds.forEach(id=> setC(id, GREY, id[0]==='n'?'2.5':'2.5'));
+  const s=steps2[i2];
+  if(s.phase==='fwd'){
+    for(let g=0; g<=s.k; g++) fwd[g].forEach(id=> setC(id, GREEN, g===s.k?'4.5':'2.5'));
+  } else if(s.phase==='bwd'){
+    fwd.forEach(grp=> grp.forEach(id=> setC(id, GREEN, '2.5')));      // data already there
+    for(let g=0; g<=s.k; g++) bwd[g].forEach(id=> setC(id, ORANGE, g===s.k?'4.5':'2.5'));
+  } else if(s.phase==='done'){
+    bwd.forEach(grp=> grp.forEach(id=> setC(id, ORANGE, '3')));
+  }
+  const tagClass = s.phase==='fwd'?'tag-fwd':(s.phase==='bwd'?'tag-bwd':'tag-info');
+  const tagTxt = s.phase==='fwd'?'forward':(s.phase==='bwd'?'backward':(s.phase==='done'?'done':'info'));
+  document.getElementById('cap2').innerHTML = `<span class="step-tag ${tagClass}">${tagTxt}</span>`+s.cap;
+}
+function stop2(){ if(t2){clearInterval(t2);t2=null;document.getElementById('b2auto').textContent='▶ Auto';} }
+document.getElementById('b2next').onclick=()=>{ if(i2<steps2.length-1){i2++;render2();} };
+document.getElementById('b2prev').onclick=()=>{ if(i2>0){i2--;render2();} };
+document.getElementById('b2reset').onclick=()=>{ stop2(); i2=0; render2(); };
+document.getElementById('b2auto').onclick=function(){
+  if(t2){stop2();return;}
+  this.textContent='⏸ Pause';
+  t2=setInterval(()=>{ if(i2<steps2.length-1){i2++;render2();} else stop2(); }, 1600);
+};
+render2();
+</script>
+</body>
+</html>

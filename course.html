@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Networks — Your Course (Zero to Hero, your way)</title>
+<style>
+  :root{
+    --bg:#0f1117;--panel:#171a23;--panel2:#1d2130;--ink:#e8ebf2;--muted:#9aa3b7;
+    --line:#2a2f40;--accent:#5b8cff;--accent2:#7c5cff;--green:#36d399;--orange:#fbbd23;--chip:#232838;--maxw:920px;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px 110px}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%,rgba(124,92,255,.25),transparent 60%);padding:60px 20px 34px;text-align:center}
+  header.hero h1{font-size:38px;line-height:1.12;margin:0 0 12px;letter-spacing:-.5px}
+  header.hero p{color:var(--muted);max-width:620px;margin:0 auto;font-size:18px}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--accent2);padding:6px 14px;border-radius:999px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:18px}
+  h2{font-size:25px;margin:52px 0 10px;letter-spacing:-.3px}
+  h2 .ic{margin-right:8px}
+  p{margin:12px 0}.muted{color:var(--muted)}strong{color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin:18px 0}
+  .profile{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.profile{grid-template-columns:1fr}}
+  .pbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .pbox h3{margin:0 0 8px;font-size:16px}
+  .pbox.good h3{color:var(--green)} .pbox.warn h3{color:var(--orange)}
+  ul{margin:8px 0;padding-left:18px}li{margin:6px 0;font-size:14.5px}
+  .mod{display:flex;gap:16px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+  .mod .num{flex:0 0 46px;height:46px;border-radius:11px;background:var(--chip);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:var(--accent2)}
+  .mod .body{flex:1}
+  .mod h3{margin:0 0 4px;font-size:18px;color:#fff}
+  .mod .meta{font-size:13px;color:var(--muted);margin:6px 0}
+  .mod .tags{margin-top:9px;display:flex;flex-wrap:wrap;gap:7px}
+  .tag{font-size:12.5px;padding:3px 9px;border-radius:7px;border:1px solid var(--line);background:#0b0d13;text-decoration:none;color:#bcd0ff}
+  .tag:hover{border-color:var(--accent2)}
+  .tag.vid{color:#ff8a8a;border-color:#3a2030;background:#1c1418}
+  .status{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .s-done{background:rgba(54,211,153,.16);color:var(--green)}
+  .s-now{background:rgba(124,92,255,.18);color:#b39dff}
+  .s-next{background:var(--chip);color:var(--muted)}
+  .loop{background:#0b0d13;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;text-align:center}
+  .loop b{color:#fff}
+  .footer{text-align:center;color:var(--muted);margin-top:70px;font-size:14px}
+  code{background:#0b0d13;border:1px solid var(--line);padding:2px 6px;border-radius:5px;font-family:"SF Mono",monospace;font-size:13px;color:#bcd0ff}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="badge">Your Course · Zero to Hero</div>
+  <h1>Neural Networks → GPT</h1>
+  <p>Andrej Karpathy's full curriculum, re-sequenced and taught the way <em>you</em> learn: one example carried all the way through, real numbers first, every term defined, you restate it back at each checkpoint.</p>
+</header>
+<div class="wrap">
+
+<!-- profile -->
+<h2><span class="ic">🧭</span>How we teach this (your learning profile)</h2>
+<div class="card">
+  <div class="profile">
+    <div class="pbox good">
+      <h3>Your strengths — we lean on these</h3>
+      <ul>
+        <li>You <strong>restate ideas in your own words</strong> — our #1 tool. Every checkpoint, you explain it back.</li>
+        <li>You ask <strong>surgical questions</strong> and demand to know <strong>where formulas come from</strong> — so we always derive, never assert.</li>
+        <li>You <strong>connect to the real world</strong> and form your own analogies (the "linked list").</li>
+      </ul>
+    </div>
+    <div class="pbox warn">
+      <h3>What overwhelms you — we avoid these</h3>
+      <ul>
+        <li>Many new symbols at once → <strong>one example, carried through. Never two at once.</strong></li>
+        <li>Abstract before concrete → <strong>real numbers first, names second.</strong></li>
+        <li>Word collisions (data/weight, error/loss) → <strong>every term defined once, up front.</strong></li>
+        <li>Unexplained numbers / long prose → <strong>state every number's origin; use tables, visuals, runnable code.</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="loop" style="margin-top:14px">
+    <b>The loop every module follows:</b> &nbsp; concrete number → one tiny step → <b>you restate it</b> → I confirm → checkpoint → next
+  </div>
+</div>
+
+<!-- the path -->
+<h2><span class="ic">🗺️</span>The path (do them in order)</h2>
+<p class="muted">Each module pairs a hands-on lesson (HTML you click / Python you run) with the matching Karpathy video to watch <em>after</em>. <span style="color:var(--green)">Green = done</span>, <span style="color:#b39dff">purple = where you are</span>, grey = ahead.</p>
+
+<!-- M1 -->
+<div class="mod">
+  <div class="num">1</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>The neuron &amp; the forward pass</h3><span class="status s-done">✓ done</span></div>
+    <div class="meta">One neuron = weighted sum of inputs + bias → activation (ReLU). Stack them → a network. Running data through to get an answer = the forward pass. You saw it with real numbers through 13 parameters.</div>
+    <div class="tags">
+      <a class="tag" href="../neural-networks-explained/index.html">🖥️ lesson: neural-networks</a>
+      <a class="tag" href="explore_05_network_forward.py">🐍 run: explore_05_network_forward.py</a>
+      <span class="tag vid">▶ Karpathy: (intro, inside video 1)</span>
+    </div>
+  </div>
+</div>
+
+<!-- M2 -->
+<div class="mod">
+  <div class="num">2</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>Gradients &amp; backpropagation</h3><span class="status s-done">✓ done</span></div>
+    <div class="meta">data vs grad. Error/loss. The training loop (error → 0). Backprop = walk the trail backward, multiply local rates (the chain rule). You built the autograd engine and it matched PyTorch.</div>
+    <div class="tags">
+      <a class="tag" href="deep-dive.html">🖥️ lesson: deep-dive</a>
+      <a class="tag" href="backprop-animated.html">🎬 animated: backprop</a>
+      <a class="tag" href="explore_04_backprop.py">🐍 run: explore_04_backprop.py</a>
+      <span class="tag vid">▶ Karpathy video 1: "micrograd / backprop"</span>
+    </div>
+  </div>
+</div>
+
+<!-- M3 -->
+<div class="mod">
+  <div class="num">3</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>Training a whole network (micrograd)</h3><span class="status s-now">◐ deepen next</span></div>
+    <div class="meta">Put it together: a network of many neurons, trained by the loop over and over until loss drops. The full backward pass filling all 13 grads with real numbers — the piece we haven't done by hand yet.</div>
+    <div class="tags">
+      <a class="tag" href="stage1_micrograd.py">🐍 run: stage1_micrograd.py</a>
+      <span class="tag vid">▶ Karpathy video 1 (second half)</span>
+    </div>
+  </div>
+</div>
+
+<!-- M4 -->
+<div class="mod">
+  <div class="num">4</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>Your first language model (makemore · bigram)</h3><span class="status s-next">ahead</span></div>
+    <div class="meta">A real dataset (32k names). The model learns letter-by-letter patterns and invents new names. First taste of: a real training loop in PyTorch tensors, and sampling/generation.</div>
+    <div class="tags">
+      <span class="tag">🐍 coming: stage2_makemore.py</span>
+      <span class="tag vid">▶ Karpathy video 2: "makemore part 1"</span>
+    </div>
+  </div>
+</div>
+
+<!-- M5 -->
+<div class="mod">
+  <div class="num">5</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>The MLP language model + embeddings</h3><span class="status s-next">ahead</span></div>
+    <div class="meta">Build embeddings as a trainable lookup table (the thing you use daily — now from scratch). Minibatches, learning-rate tuning, train/val splits, overfitting — the real ML-engineer toolkit.</div>
+    <div class="tags">
+      <span class="tag">🐍 coming: stage2b_mlp.py</span>
+      <span class="tag vid">▶ Karpathy videos 3–4: "makemore part 2–3"</span>
+    </div>
+  </div>
+</div>
+
+<!-- M6 -->
+<div class="mod">
+  <div class="num">6</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>Attention &amp; the Transformer (build GPT)</h3><span class="status s-next">ahead</span></div>
+    <div class="meta">The one new idea that makes an LLM: attention (every token looks at every other). Build a tiny GPT and train it on Shakespeare on your Mac's GPU — it generates text. Your "I trained a GPT" moment.</div>
+    <div class="tags">
+      <a class="tag" href="../neural-networks-explained/transformers.html">🖥️ lesson: transformers</a>
+      <span class="tag">🐍 coming: stage3_nanogpt.py</span>
+      <span class="tag vid">▶ Karpathy video 7: "Let's build GPT"</span>
+    </div>
+  </div>
+</div>
+
+<!-- M7 -->
+<div class="mod">
+  <div class="num">7</div>
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;gap:10px"><h3>Tokenizer &amp; scaling to GPT-2</h3><span class="status s-next">ahead</span></div>
+    <div class="meta">How text really becomes tokens (you know this from work — now build it). Then what it takes to scale to GPT-2 (124M), and why finishing needs cloud GPUs. Closes the loop to your day job.</div>
+    <div class="tags">
+      <span class="tag">🐍 coming: stage4_tokenizer.py</span>
+      <span class="tag vid">▶ Karpathy videos 8–9: "tokenizer", "reproduce GPT-2"</span>
+    </div>
+  </div>
+</div>
+
+<h2><span class="ic">⚙️</span>Setup (already done)</h2>
+<div class="card" style="font-size:14.5px">
+  <p style="margin:0 0 8px">Everything runs on your M2 Pro. From the project folder:</p>
+  <p style="margin:0"><code>cd /Users/mugilansakthivel/Developer/learning/train-your-own-gpt</code><br>
+  <code>.venv/bin/python &lt;script&gt;.py</code></p>
+  <p class="muted" style="margin:10px 0 0">Python 3.12 + PyTorch 2.12, GPU (MPS) verified. Modules 1–3's scripts are ready now.</p>
+</div>
+
+<p class="footer">You're 2.5 modules in. Most people who "use AI" never get past module 0. 🚀</p>
+</div>
+</body>
+</html>
