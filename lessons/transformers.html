@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformers &amp; LLMs — A Visual Walkthrough</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d2130; --ink:#e8ebf2; --muted:#9aa3b7;
+    --line:#2a2f40; --accent:#5b8cff; --accent2:#7c5cff; --good:#36d399; --warn:#fbbd23;
+    --bad:#f87272; --chip:#232838; --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px 120px}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%, rgba(124,92,255,.28), transparent 60%);
+    padding:72px 20px 48px; text-align:center;}
+  header.hero h1{font-size:42px; line-height:1.1; margin:0 0 14px; letter-spacing:-.5px}
+  header.hero p{color:var(--muted); max-width:640px; margin:0 auto; font-size:18px}
+  .badge{display:inline-block; background:var(--chip); border:1px solid var(--line);
+    color:var(--accent2); padding:6px 14px; border-radius:999px; font-size:13px;
+    letter-spacing:.5px; text-transform:uppercase; margin-bottom:22px}
+  h2{font-size:28px; margin:64px 0 6px; letter-spacing:-.3px; scroll-margin-top:20px}
+  h2 .num{color:var(--accent2); font-weight:800; margin-right:10px}
+  h3{font-size:20px; margin:34px 0 8px; color:#fff}
+  p{margin:14px 0} .lead{font-size:18px; color:#cfd5e6}
+  .muted{color:var(--muted)} strong{color:#fff}
+  .term{color:var(--accent2); font-weight:600}
+  code{background:#0b0d13; border:1px solid var(--line); padding:2px 7px; border-radius:6px;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:14px; color:#bcd0ff}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; margin:22px 0}
+  .card.tight{padding:18px}
+  .callout{border-left:4px solid var(--accent2); background:var(--panel2);
+    border-radius:0 12px 12px 0; padding:14px 18px; margin:20px 0}
+  .callout.good{border-color:var(--good)} .callout.warn{border-color:var(--warn)}
+  .callout b{color:#fff}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  .center{text-align:center} svg{max-width:100%; height:auto; display:block; margin:0 auto}
+  .fig-cap{text-align:center; color:var(--muted); font-size:14px; margin-top:10px}
+  select,input[type=text]{background:#0b0d13; color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:10px 12px; font-size:15px; width:100%}
+  .ctrl{display:flex; align-items:center; gap:12px; margin:10px 0}
+  .ctrl label{width:130px; color:var(--muted); font-size:14px}
+  .ctrl input[type=range]{flex:1; accent-color:var(--accent2)}
+  .ctrl .val{width:64px; text-align:right; font-family:"SF Mono",ui-monospace,monospace; color:#bcd0ff; font-size:14px}
+  button{background:var(--accent2); color:#fff; border:0; border-radius:10px; padding:10px 18px;
+    font-size:15px; font-weight:600; cursor:pointer}
+  button.ghost{background:var(--chip); border:1px solid var(--line); color:var(--ink)}
+  button:active{transform:translateY(1px)}
+  .readout{font-family:"SF Mono",ui-monospace,monospace; font-size:15px; line-height:1.9;
+    background:#0b0d13; border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:14px}
+  .readout .big{font-size:22px; color:var(--good)}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:15px}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left}
+  th{background:var(--panel2); color:#fff}
+  .toc{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:26px}
+  .toc a{background:var(--chip); border:1px solid var(--line); color:var(--ink);
+    text-decoration:none; padding:7px 13px; border-radius:999px; font-size:13px}
+  .toc a:hover{border-color:var(--accent2); color:var(--accent2)}
+  hr{border:0; border-top:1px solid var(--line); margin:56px 0}
+  ul.clean{padding-left:20px} ul.clean li{margin:7px 0}
+  .footer{text-align:center; color:var(--muted); margin-top:80px; font-size:14px}
+  /* token chips */
+  .tok{display:inline-block; padding:5px 10px; margin:4px; border-radius:8px;
+    background:var(--chip); border:1px solid var(--line); font-family:"SF Mono",monospace; font-size:14px}
+  .tok.sub{background:#2a2340; border-color:#5b8cff}
+  /* attention sentence */
+  .att-word{display:inline-block; padding:6px 9px; margin:3px; border-radius:8px; cursor:pointer;
+    border:1px solid transparent; transition:.15s; font-size:17px; background:#1a1e2b}
+  .att-word:hover{border-color:var(--accent2)}
+  .att-word.active{background:var(--accent2); color:#fff; font-weight:700}
+  .bar{height:22px; border-radius:5px; background:linear-gradient(90deg,#7c5cff,#5b8cff); margin:3px 0}
+  .barrow{display:flex; align-items:center; gap:10px; margin:5px 0; font-size:14px}
+  .barrow .lbl{width:90px; text-align:right; font-family:"SF Mono",monospace; color:#cfd5e6}
+  .barrow .pct{width:50px; font-family:"SF Mono",monospace; color:#9aa3b7; font-size:13px}
+  .pill{display:inline-block; padding:1px 8px; border-radius:6px; background:var(--chip);
+    border:1px solid var(--line); font-size:13px; margin:0 2px}
+  .gentext{font-size:18px; line-height:1.8; min-height:30px}
+  .gentext .new{color:var(--good); font-weight:700}
+  .navlinks{display:flex; justify-content:space-between; margin-top:50px; font-size:15px}
+  .navlinks a{color:var(--accent2); text-decoration:none}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="badge">Part 2 · Visual Walkthrough</div>
+  <h1>How an LLM Works:<br>Transformers &amp; Attention</h1>
+  <p>You already know neurons, weights, and gradient descent. An LLM is all of that — plus <strong>one new trick called attention</strong>. Type some text, watch it become numbers, click a word and see the model "pay attention," then run a real next-word generator.</p>
+  <nav class="toc">
+    <a href="#bridge">1 · The bridge</a>
+    <a href="#tokens">2 · Tokens</a>
+    <a href="#embed">3 · Embeddings</a>
+    <a href="#attention">4 · Attention ★</a>
+    <a href="#block">5 · The transformer</a>
+    <a href="#params">6 · The billions</a>
+    <a href="#train">7 · Training</a>
+    <a href="#generate">8 · Generating ★</a>
+    <a href="#recap">9 · Recap</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+<!-- 1 -->
+<h2 id="bridge"><span class="num">1</span>The bridge from what you know</h2>
+<p class="lead">An LLM (Large Language Model) is a giant neural network — the same neurons and weights from Part 1 — trained to do one absurdly simple thing: <strong>predict the next word.</strong></p>
+<p>That's genuinely it. Everything impressive an LLM does — answering questions, writing code, reasoning — emerges from getting <em>extremely</em> good at "what word comes next?" To do that, four problems must be solved. This page walks each one:</p>
+<div class="card tight">
+<p style="margin:6px 0">① Text isn't numbers → <span class="term">tokens</span> &amp; <span class="term">embeddings</span> (Sections 2–3)</p>
+<p style="margin:6px 0">② Words need context from other words → <span class="term">attention</span> (Section 4) ← the big new idea</p>
+<p style="margin:6px 0">③ Stack it deep → the <span class="term">transformer</span> &amp; its <span class="term">parameters</span> (Sections 5–6)</p>
+<p style="margin:6px 0">④ Teach it &amp; run it → <span class="term">training</span> &amp; <span class="term">generation</span> (Sections 7–8)</p>
+</div>
+
+<!-- 2 -->
+<h2 id="tokens"><span class="num">2</span>Step ① — Turning text into tokens</h2>
+<p>A neural network only does math, so text must become numbers first. But the model doesn't work word-by-word or letter-by-letter — it works in <span class="term">tokens</span>: chunks that are roughly ¾ of a word. Common words are one token; rarer words get split into pieces. Type anything below and watch it tokenize.</p>
+
+<div class="card">
+  <input type="text" id="tokInput" value="Transformers are unbelievably powerful!" />
+  <div id="tokOut" style="margin-top:14px"></div>
+  <div class="readout" id="tokStats"></div>
+  <p class="muted" style="font-size:13px;margin-bottom:0">Purple chips = a word that got split into sub-word pieces. Each token maps to an ID number in the model's fixed vocabulary (~50,000–100,000 tokens). This is why you're billed "per token" and why models have a token limit.</p>
+</div>
+
+<!-- 3 -->
+<h2 id="embed"><span class="num">3</span>Step ① cont. — Tokens become vectors (embeddings)</h2>
+<p>Each token ID is then turned into an <span class="term">embedding</span>: a long list of numbers (a <span class="term">vector</span>) that captures the token's <em>meaning</em>. The trick: words with similar meanings get similar vectors, so they sit close together in space. Real embeddings have hundreds or thousands of dimensions — impossible to draw — so here's a 2-D shadow of that idea:</p>
+
+<div class="card center">
+<svg id="embedSvg" viewBox="0 0 640 360" width="640" role="img" aria-label="A 2D map of word embeddings clustered by meaning">
+  <!-- cluster labels -->
+  <text x="150" y="40" fill="#5b8cff" font-size="13" text-anchor="middle" opacity=".8">— royalty —</text>
+  <text x="500" y="40" fill="#36d399" font-size="13" text-anchor="middle" opacity=".8">— animals —</text>
+  <text x="320" y="340" fill="#fbbd23" font-size="13" text-anchor="middle" opacity=".8">— food —</text>
+  <g id="embPoints" font-family="-apple-system,sans-serif" font-size="14"></g>
+  <g id="embArrows"></g>
+</svg>
+<div class="fig-cap">Words near each other mean similar things. Drag-free; click the button to reveal a famous pattern.</div>
+</div>
+<div class="center">
+  <button id="analogyBtn">Show: king − man + woman ≈ queen</button>
+</div>
+<div class="callout">
+<b>Why this matters:</b> meaning becomes <em>geometry</em>. "Closeness" = "similar meaning," and even relationships become directions you can do arithmetic on. This same idea (turning things into vectors and finding the nearest ones) is exactly what powers <span class="term">vector databases</span> and <span class="term">RAG</span>.
+</div>
+
+<!-- 4 -->
+<h2 id="attention"><span class="num">4</span>Step ② — Attention ★ (the one big idea)</h2>
+<p class="lead">A word's meaning depends on the <em>other</em> words around it. <span class="term">Attention</span> is the mechanism that lets every word look at every other word and decide which ones matter for understanding it.</p>
+<p>Classic example: in the sentence below, what does <strong>"it"</strong> refer to — the animal or the street? A human knows instantly. The model figures it out by having "it" <strong>pay attention to</strong> the right words. <strong>Click any word</strong> to see what it attends to — the brighter a word glows, the more attention is on it.</p>
+
+<div class="card">
+  <div id="attSentence" style="text-align:center; margin-bottom:8px"></div>
+  <p class="muted center" style="font-size:13px">👆 Click a word. Try <b>“it”</b> and <b>“tired”</b>.</p>
+  <div id="attBars"></div>
+</div>
+<div class="callout good">
+<b>The payoff of attention:</b> the model builds an understanding of each word <em>in context</em>, looking at the whole sentence at once (not one word at a time like older models). It's also why it's <em>fast</em> — all words are processed in parallel — and why it handles long passages well. Doing this for every word against every other word is called <span class="term">self-attention</span>, and it's the heart of the transformer.</p>
+
+<!-- 5 -->
+<h2 id="block"><span class="num">5</span>Step ③ — The transformer block, stacked deep</h2>
+<p>A <span class="term">transformer</span> is built by stacking the same block over and over. One block = an <strong>attention layer</strong> (mix in context from other words) followed by a small <strong>neural network</strong> (the neurons from Part 1, doing per-word thinking). Stack dozens of these and you get a full LLM.</p>
+
+<div class="card center">
+<svg viewBox="0 0 700 340" width="700" role="img" aria-label="A transformer made of stacked blocks">
+  <g font-family="-apple-system,sans-serif">
+    <!-- input -->
+    <rect x="240" y="300" width="220" height="34" rx="9" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/>
+    <text x="350" y="322" fill="#e8ebf2" font-size="14" text-anchor="middle">tokens → embeddings (Sec 2–3)</text>
+    <!-- 3 stacked blocks -->
+    <g>
+      <rect x="200" y="220" width="300" height="64" rx="12" fill="#171a23" stroke="#7c5cff" stroke-width="2"/>
+      <text x="350" y="244" fill="#fff" font-size="14" text-anchor="middle">① Attention layer — mix in context</text>
+      <text x="350" y="266" fill="#9aa3b7" font-size="13" text-anchor="middle">② Neural net — think per-word</text>
+    </g>
+    <g opacity=".85">
+      <rect x="200" y="140" width="300" height="64" rx="12" fill="#171a23" stroke="#7c5cff" stroke-width="2"/>
+      <text x="350" y="164" fill="#fff" font-size="14" text-anchor="middle">① Attention layer</text>
+      <text x="350" y="186" fill="#9aa3b7" font-size="13" text-anchor="middle">② Neural net</text>
+    </g>
+    <g opacity=".7">
+      <rect x="200" y="60" width="300" height="64" rx="12" fill="#171a23" stroke="#7c5cff" stroke-width="2"/>
+      <text x="350" y="84" fill="#fff" font-size="14" text-anchor="middle">… ×N blocks (12, 32, 96 …)</text>
+      <text x="350" y="106" fill="#9aa3b7" font-size="13" text-anchor="middle">deeper = smarter</text>
+    </g>
+    <!-- output -->
+    <rect x="240" y="14" width="220" height="34" rx="9" fill="#1d2130" stroke="#36d399" stroke-width="2"/>
+    <text x="350" y="36" fill="#36d399" font-size="14" text-anchor="middle">prediction: next token</text>
+    <!-- arrows -->
+    <g stroke="#9aa3b7" stroke-width="2" marker-end="url(#a2)">
+      <line x1="350" y1="300" x2="350" y2="286"/>
+      <line x1="350" y1="220" x2="350" y2="206"/>
+      <line x1="350" y1="140" x2="350" y2="126"/>
+      <line x1="350" y1="60"  x2="350" y2="50"/>
+    </g>
+    <defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9aa3b7"/></marker></defs>
+  </g>
+</svg>
+<div class="fig-cap">Data flows up through N identical blocks, gathering context and refining its understanding, until the top produces the next-token prediction.</div>
+</div>
+
+<!-- 6 -->
+<h2 id="params"><span class="num">6</span>Step ③ cont. — So what ARE "the billions of parameters"?</h2>
+<p>Remember from Part 1: every connection has a <span class="term">weight</span>, and weights are the learned knowledge. A transformer has weights in <em>every</em> attention layer and <em>every</em> neural-net layer, across all the stacked blocks, plus all the embedding vectors. Add them all up:</p>
+<table>
+  <tr><th>Model</th><th>Parameters (weights)</th><th>Memory just to hold it*</th></tr>
+  <tr><td>GPT-2 (2019)</td><td>1.5 billion</td><td>~3 GB</td></tr>
+  <tr><td>A 7B local model</td><td>7 billion</td><td>~14 GB</td></tr>
+  <tr><td>GPT-3 (2020)</td><td>175 billion</td><td>~350 GB</td></tr>
+  <tr><td>Frontier models</td><td>hundreds of billions+</td><td>needs many GPUs</td></tr>
+</table>
+<p class="muted">*Rule of thumb: ≈ 2 bytes per parameter. So a 70-billion-parameter model needs ≈ 140 GB just to <em>load</em> — which is why model size decides what hardware (and how many GPUs) you need.</p>
+<div class="callout">
+<b>Plain answer to "what's inside the billions of parameters?"</b> Numbers. Specifically, all the attention weights, all the neuron weights and biases, and all the embedding vectors — every tunable number that gradient descent adjusted during training. More parameters = more capacity to store patterns and knowledge.</div>
+
+<!-- 7 -->
+<h2 id="train"><span class="num">7</span>Step ④ — How an LLM is trained (3 stages)</h2>
+<p>The weights start random (it outputs gibberish). Three stages turn it into a helpful assistant:</p>
+<div class="card tight">
+<p style="margin:8px 0"><span class="pill" style="border-color:#5b8cff">Stage 1</span> <strong>Pretraining</strong> — show it a huge chunk of the internet and have it predict the next token, trillions of times. Using the same loss + gradient descent + backprop loop from Part 1. To get good at predicting the next word, it's <em>forced</em> to absorb grammar, facts, reasoning, and code. <span class="muted">Costs millions of dollars, weeks on thousands of GPUs. Result: a “base model” — smart but just an autocomplete.</span></p>
+<p style="margin:8px 0"><span class="pill" style="border-color:#7c5cff">Stage 2</span> <strong>Fine-tuning (instruction tuning)</strong> — keep training on curated “instruction → good answer” examples so it learns to <em>follow requests</em> instead of just continuing text.</p>
+<p style="margin:8px 0"><span class="pill" style="border-color:#36d399">Stage 3</span> <strong>RLHF</strong> (Reinforcement Learning from Human Feedback) — humans rank answers best-to-worst; the model is nudged to produce answers humans prefer (more helpful, honest, harmless). <span class="muted">This is the step that turned raw GPT-3 into ChatGPT.</span></p>
+</div>
+
+<!-- 8 -->
+<h2 id="generate"><span class="num">8</span>Step ④ cont. — Generating text ★ (with a temperature dial)</h2>
+<p>At <span class="term">inference</span> time the model generates <strong>one token at a time</strong>: it predicts the next token, appends it, then feeds the whole thing back in to predict the next — over and over. (That's why you see answers stream out word by word.) For each step it produces a <em>probability</em> for every possible next token. <span class="term">Temperature</span> controls how boldly it picks.</p>
+
+<div class="card">
+  <p class="muted" style="margin-top:0">Prompt: <code>The cat sat on the …</code> — here are the model's candidate next tokens and their probabilities. Drag <b>temperature</b> and watch the distribution change.</p>
+  <div class="ctrl"><label>Temperature</label><input id="temp" type="range" min="0.1" max="2" step="0.05" value="0.8"><span class="val" id="tempv">0.80</span></div>
+  <div id="probBars" style="margin:14px 0"></div>
+  <div class="callout warn" style="margin:10px 0">
+    <span id="tempNote"></span>
+  </div>
+  <hr style="margin:18px 0">
+  <p class="muted" style="margin-top:0">Now watch the loop: each click samples one token using the temperature above, appends it, and predicts the next.</p>
+  <div class="readout gentext" id="genOut">The cat sat on the</div>
+  <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
+    <button id="genStep">Generate next token ›</button>
+    <button id="genAuto" class="ghost">Auto-write</button>
+    <button id="genReset" class="ghost">Reset</button>
+  </div>
+</div>
+<div class="callout">
+<b>Two more terms this explains:</b> <span class="term">Context window</span> = how many tokens the model can “see” at once (prompt + answer so far) — its working memory. <span class="term">Hallucination</span> = it confidently states something false, because it's predicting <em>plausible</em> tokens, not <em>verified</em> truths — there's no built-in fact-checker. (That's the gap <span class="term">RAG</span> fills by feeding it real documents.)
+</div>
+
+<!-- 9 -->
+<h2 id="recap"><span class="num">9</span>Putting it all together</h2>
+<div class="card">
+<p style="margin:0">Text is split into <span class="term">tokens</span>, each turned into a meaning-<span class="term">vector</span> (<span class="term">embedding</span>). Those flow up through a stack of <span class="term">transformer</span> blocks; in each block, <span class="term">attention</span> lets every token gather context from every other token, and a small neural net thinks about it. After many blocks, the model outputs a probability for the next <span class="term">token</span>, which <span class="term">temperature</span> shapes into a choice. Append it, feed it back, repeat — that's <span class="term">generation</span>. All the <span class="term">weights</span> that make this work are the <span class="term">billions of parameters</span>, set by <span class="term">pretraining</span> (next-token prediction over the internet), then <span class="term">fine-tuning</span> and <span class="term">RLHF</span>. The whole thing runs on <span class="term">GPUs</span> because it's mountains of the matrix math from Part 1.</p>
+</div>
+
+<table>
+  <tr><th>Term</th><th>In one sentence</th></tr>
+  <tr><td>Token</td><td>A chunk of text (~¾ of a word) the model reads/writes in.</td></tr>
+  <tr><td>Embedding / Vector</td><td>A list of numbers representing a token's meaning; similar meanings sit close.</td></tr>
+  <tr><td>Attention</td><td>Each word looking at every other word to decide what's relevant.</td></tr>
+  <tr><td>Self-attention</td><td>Doing that for every word against every other word in the input.</td></tr>
+  <tr><td>Transformer</td><td>The architecture: stacked blocks of attention + neural net.</td></tr>
+  <tr><td>Parameters</td><td>All the weights across every layer — the billions.</td></tr>
+  <tr><td>Pretraining</td><td>Learning by predicting the next token over huge text.</td></tr>
+  <tr><td>Fine-tuning</td><td>Extra training to follow instructions / a style.</td></tr>
+  <tr><td>RLHF</td><td>Aligning answers to human preferences via feedback.</td></tr>
+  <tr><td>Inference / Generation</td><td>Producing text one token at a time at run time.</td></tr>
+  <tr><td>Temperature</td><td>Randomness dial for picking the next token.</td></tr>
+  <tr><td>Context window</td><td>How many tokens it can see at once — its working memory.</td></tr>
+  <tr><td>Hallucination</td><td>Confidently stating something false (no built-in fact check).</td></tr>
+</table>
+
+<div class="callout good"><b>You now understand an LLM end to end.</b> The agents you already build sit one layer above all this: an LLM doing inference in a loop, allowed to call tools. Everything on this page is what's happening underneath every prompt you send.</div>
+
+<div class="navlinks">
+  <a href="index.html">‹ Part 1 · Neural Networks</a>
+  <span class="muted">Part 2 · Transformers &amp; LLMs</span>
+</div>
+
+<p class="footer">Click the words. Drag the temperature. Watch it generate. 🤖</p>
+
+</div>
+
+<script>
+// ---------- 2. Tokenizer (illustrative) ----------
+const common = new Set(["the","a","an","is","are","was","were","be","to","of","and","in","on","for","it","i","you","he","she","we","they","cat","dog","sat","on","powerful","run","sun","run"]);
+function tokenize(text){
+  const words = text.trim().split(/(\s+)/).filter(w=>w.length);
+  const toks=[];
+  for(const w of words){
+    if(/^\s+$/.test(w)) continue;
+    const core = w.replace(/[^A-Za-z']/g,'');
+    const punct = w.replace(/[A-Za-z']/g,'');
+    if(core){
+      if(core.length<=4 || common.has(core.toLowerCase())){
+        toks.push({t:w.replace(/[^A-Za-z']/g, m=>'')+ (punct?'':''), sub:false, raw:core});
+        if(punct) toks.push({t:punct, sub:false, raw:punct});
+      } else {
+        // split long word into ~4-5 char subword pieces
+        let i=0, first=true;
+        while(i<core.length){
+          const piece=core.slice(i, i+ (first?5:4));
+          toks.push({t:(first?'':'‹')+piece, sub:!first, raw:piece});
+          i+= (first?5:4); first=false;
+        }
+        if(punct) toks.push({t:punct, sub:false, raw:punct});
+      }
+    } else if(punct){ toks.push({t:punct, sub:false, raw:punct}); }
+  }
+  return toks;
+}
+function renderTokens(){
+  const text=document.getElementById('tokInput').value;
+  const toks=tokenize(text);
+  document.getElementById('tokOut').innerHTML = toks.map(o=>
+    `<span class="tok ${o.sub?'sub':''}">${o.t.replace(/</g,'&lt;')}</span>`).join('');
+  const chars=text.length;
+  document.getElementById('tokStats').innerHTML =
+    `${chars} characters → <b>${toks.length} tokens</b> &nbsp;·&nbsp; ~${(chars/Math.max(toks.length,1)).toFixed(1)} chars per token`;
+}
+document.getElementById('tokInput').addEventListener('input',renderTokens);
+renderTokens();
+
+// ---------- 3. Embeddings 2D ----------
+const words=[
+  {w:"king",x:120,y:90,c:"#5b8cff"},{w:"queen",x:190,y:120,c:"#5b8cff"},
+  {w:"man",x:95,y:160,c:"#5b8cff"},{w:"woman",x:165,y:190,c:"#5b8cff"},
+  {w:"prince",x:230,y:80,c:"#5b8cff"},
+  {w:"cat",x:470,y:90,c:"#36d399"},{w:"dog",x:540,y:110,c:"#36d399"},
+  {w:"tiger",x:500,y:160,c:"#36d399"},{w:"horse",x:575,y:170,c:"#36d399"},
+  {w:"apple",x:280,y:280,c:"#fbbd23"},{w:"bread",x:350,y:300,c:"#fbbd23"},
+  {w:"pizza",x:330,y:255,c:"#fbbd23"},{w:"banana",x:400,y:275,c:"#fbbd23"}
+];
+const pg=document.getElementById('embPoints');
+pg.innerHTML=words.map(o=>
+  `<circle cx="${o.x}" cy="${o.y}" r="6" fill="${o.c}"/><text x="${o.x+10}" y="${o.y+5}" fill="#cfd5e6">${o.w}</text>`).join('');
+function wp(name){return words.find(o=>o.w===name);}
+document.getElementById('analogyBtn').addEventListener('click',()=>{
+  const king=wp("king"),man=wp("man"),woman=wp("woman"),queen=wp("queen");
+  const ar=document.getElementById('embArrows');
+  ar.innerHTML=
+    `<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#fbbd23"/></marker></defs>`+
+    `<line x1="${man.x}" y1="${man.y}" x2="${woman.x}" y2="${woman.y}" stroke="#fbbd23" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>`+
+    `<line x1="${king.x}" y1="${king.y}" x2="${queen.x}" y2="${queen.y}" stroke="#fbbd23" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>`+
+    `<text x="${(man.x+woman.x)/2-10}" y="${(man.y+woman.y)/2+22}" fill="#fbbd23" font-size="12">man→woman</text>`+
+    `<text x="${(king.x+queen.x)/2-10}" y="${(king.y+queen.y)/2-12}" fill="#fbbd23" font-size="12">king→queen</text>`;
+});
+
+// ---------- 4. Attention ----------
+const sent=["The","animal","didn't","cross","the","street","because","it","was","too","tired","."];
+// attention weight rows: index -> weights over all tokens (illustrative but meaningful)
+function attRow(i){
+  const n=sent.length; const w=new Array(n).fill(0);
+  const word=sent[i].toLowerCase();
+  // base: self + a little to neighbours
+  w[i]=0.5;
+  if(i>0) w[i-1]+=0.12; if(i<n-1) w[i+1]+=0.08;
+  // semantic special cases
+  if(word==="it"){ w[1]+=1.4; w[5]+=0.35; }              // it -> animal (and a bit -> street)
+  if(word==="tired"){ w[7]+=0.7; w[1]+=0.8; }            // tired -> it -> animal
+  if(word==="cross"){ w[5]+=0.9; w[1]+=0.4; }            // cross -> street, animal
+  if(word==="street"){ w[3]+=0.5; }                      // street -> cross
+  if(word==="because"){ w[10]+=0.6; w[7]+=0.3; }         // because -> tired, it
+  if(word==="animal"){ w[3]+=0.3; }
+  // normalize to sum 1 (softmax-ish)
+  const s=w.reduce((a,b)=>a+b,0)||1; return w.map(x=>x/s);
+}
+let activeTok=7;
+const sentEl=document.getElementById('attSentence');
+function renderSent(){
+  const row=attRow(activeTok);
+  sentEl.innerHTML=sent.map((t,j)=>{
+    const isActive=j===activeTok;
+    const a=row[j];
+    const bg=isActive?'':`background:rgba(124,92,255,${Math.min(a*1.6,0.9)});`;
+    return `<span class="att-word ${isActive?'active':''}" data-i="${j}" style="${bg}">${t}</span>`;
+  }).join('');
+  // bars (top attended, excluding self)
+  const pairs=row.map((a,j)=>({j,a})).filter(o=>o.j!==activeTok).sort((x,y)=>y.a-x.a).slice(0,5);
+  const max=Math.max(...pairs.map(p=>p.a),0.001);
+  document.getElementById('attBars').innerHTML=
+    `<p class="muted" style="font-size:14px;margin:4px 0 8px">“<b style="color:#fff">${sent[activeTok]}</b>” pays most attention to:</p>`+
+    pairs.map(p=>`<div class="barrow"><span class="lbl">${sent[p.j]}</span>`+
+      `<div class="bar" style="width:${Math.max(8,(p.a/max)*70)}%"></div>`+
+      `<span class="pct">${Math.round(p.a*100)}%</span></div>`).join('');
+  document.querySelectorAll('.att-word').forEach(el=>el.onclick=()=>{activeTok=+el.dataset.i; renderSent();});
+}
+renderSent();
+
+// ---------- 8. Temperature + generation ----------
+// candidate next tokens after "...on the" with base logits (higher = more likely)
+const baseCands=[["mat",3.2],["floor",2.4],["sofa",2.0],["rug",1.5],["roof",1.0],["windowsill",0.6],["dragon",-0.5]];
+function softmaxT(cands,T){
+  const logits=cands.map(c=>c[1]/T);
+  const m=Math.max(...logits);
+  const ex=logits.map(l=>Math.exp(l-m));
+  const s=ex.reduce((a,b)=>a+b,0);
+  return cands.map((c,i)=>[c[0], ex[i]/s]);
+}
+function renderProbs(){
+  const T=parseFloat(document.getElementById('temp').value);
+  document.getElementById('tempv').textContent=T.toFixed(2);
+  const probs=softmaxT(baseCands,T).sort((a,b)=>b[1]-a[1]);
+  const max=probs[0][1];
+  document.getElementById('probBars').innerHTML=probs.map(p=>
+    `<div class="barrow"><span class="lbl">${p[0]}</span>`+
+    `<div class="bar" style="width:${Math.max(6,(p[1]/max)*72)}%"></div>`+
+    `<span class="pct">${Math.round(p[1]*100)}%</span></div>`).join('');
+  let note;
+  if(T<=0.4) note="<b>Low temperature:</b> the top token dominates — output is focused, predictable, repetitive. Use for facts, code.";
+  else if(T<=1.1) note="<b>Medium temperature:</b> mostly likely tokens, some variety — the usual balanced setting.";
+  else note="<b>High temperature:</b> the distribution flattens — even unlikely tokens (a “dragon” on the mat) can get picked. Creative, but risks nonsense.";
+  document.getElementById('tempNote').innerHTML=note;
+}
+document.getElementById('temp').addEventListener('input',renderProbs);
+renderProbs();
+
+// tiny continuation chain for the generation loop
+const chain={
+  "the":[["mat",3.0],["sofa",2.2],["floor",2.0],["warm",1.6],["windowsill",1.0]],
+  "mat":[["and",2.5],["near",1.8],[",",1.6],["quietly",1.2]],
+  "sofa":[["and",2.4],["watching",2.0],["near",1.4]],
+  "floor":[["and",2.3],["by",1.8],["near",1.5]],
+  "warm":[["sunny",2.6],["soft",2.0],["windowsill",2.2]],
+  "windowsill":[["watching",2.6],["and",1.8],["in",1.5]],
+  "and":[["fell",2.4],["watched",2.2],["purred",2.0]],
+  "watching":[["the",2.8],["birds",2.0]],
+  "watched":[["the",2.8],["birds",2.2]],
+  "the":[["birds",2.6],["sun",2.2],["rain",1.6],["mat",2.0]],
+  "birds":[["outside",2.6],[".",2.0]],
+  "fell":[["asleep",3.2],["over",1.2]],
+  "asleep":[[".",3.0],["quickly",1.6]],
+  "purred":[["softly",2.6],[".",2.0]],
+  "near":[["the",2.8]],"by":[["the",2.8]],"in":[["the",2.6]],
+  "watching":[["the",2.8]],"sunny":[["spot",2.6],[".",1.5]],
+  "soft":[["blanket",2.4],[".",1.5]],"spot":[[".",2.6],["all",1.4]],
+  "sun":[[".",2.4],["outside",1.8]],"outside":[[".",3.0]],
+  "quietly":[[".",2.8]],"softly":[[".",2.8]],"watched":[["the",2.6]]
+};
+let genTokens=["The","cat","sat","on","the"];
+let genAutoTimer=null;
+function sample(cands,T){
+  const probs=softmaxT(cands,T);
+  let r=Math.random(), acc=0;          // demo-only randomness
+  for(const [tok,p] of probs){ acc+=p; if(r<=acc) return tok; }
+  return probs[probs.length-1][0];
+}
+function renderGen(newTok){
+  const html=genTokens.map((t,i)=> i===genTokens.length-1 && newTok ? `<span class="new">${t}</span>` : t)
+    .join(' ').replace(/ ([.,])/g,'$1');
+  document.getElementById('genOut').innerHTML=html;
+}
+function genStep(){
+  const last=genTokens[genTokens.length-1].toLowerCase().replace(/[^a-z]/g,'');
+  const T=parseFloat(document.getElementById('temp').value);
+  const cands=chain[last];
+  if(!cands || last==='.' ){ stopAuto(); return false; }
+  const tok=sample(cands,T);
+  genTokens.push(tok);
+  renderGen(true);
+  if(tok==='.') { stopAuto(); return false; }
+  return true;
+}
+function stopAuto(){ if(genAutoTimer){clearInterval(genAutoTimer); genAutoTimer=null; document.getElementById('genAuto').textContent='Auto-write';} }
+document.getElementById('genStep').onclick=genStep;
+document.getElementById('genReset').onclick=()=>{ genTokens=["The","cat","sat","on","the"]; stopAuto(); renderGen(false); };
+document.getElementById('genAuto').onclick=function(){
+  if(genAutoTimer){ stopAuto(); return; }
+  this.textContent='Stop';
+  genAutoTimer=setInterval(()=>{ if(!genStep()) stopAuto(); }, 420);
+};
+renderGen(false);
+</script>
+</body>
+</html>

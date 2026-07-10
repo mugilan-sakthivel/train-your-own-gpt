@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Networks — Everything I Learned (my reference)</title>
+<style>
+  :root{
+    --bg:#0f1117;--panel:#171a23;--panel2:#1d2130;--ink:#e8ebf2;--muted:#9aa3b7;
+    --line:#2a2f40;--accent:#5b8cff;--accent2:#7c5cff;--green:#36d399;--orange:#fbbd23;--bad:#f87272;--chip:#232838;--maxw:900px;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px 120px}
+  header.hero{background:radial-gradient(1200px 520px at 50% -10%,rgba(91,140,255,.25),transparent 60%);padding:60px 20px 26px;text-align:center}
+  header.hero h1{font-size:38px;line-height:1.12;margin:0 0 10px;letter-spacing:-.5px}
+  header.hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:17px}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--accent);padding:6px 14px;border-radius:999px;font-size:12.5px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 24px;margin:26px 0}
+  .toc h3{margin:0 0 12px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  @media(max-width:600px){.toc ol{columns:1}}
+  .toc li{margin:5px 0}.toc a{color:#cfd5e6;text-decoration:none}.toc a:hover{color:var(--accent)}
+  .part{margin:56px 0 0;scroll-margin-top:12px}
+  .part-tag{display:inline-block;background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:3px 11px;border-radius:8px;margin-bottom:10px}
+  h2{font-size:26px;margin:6px 0 4px;letter-spacing:-.3px}
+  h3{font-size:19px;margin:26px 0 6px;color:#fff;scroll-margin-top:12px}
+  h3 .tick{color:var(--green);margin-right:6px}
+  p{margin:12px 0}.muted{color:var(--muted)}strong{color:#fff}
+  code{background:#0b0d13;border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:14px;color:#bcd0ff}
+  .def{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent2);border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .def b{color:var(--accent2)}
+  .worked{background:#0b0d13;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0;font-family:"SF Mono",ui-monospace,monospace;font-size:14px;line-height:1.85}
+  .worked .hl{color:var(--green)}
+  .callout{border-left:4px solid var(--accent);background:var(--panel2);border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-color:var(--orange)}.callout.good{border-color:var(--green)}.callout b{color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#fff}
+  .term{color:var(--accent2);font-weight:600}
+  hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+  ul.clean{padding-left:20px}ul.clean li{margin:6px 0}
+  pre{background:#0b0d13;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;font-family:"SF Mono",monospace;font-size:13.5px;line-height:1.7;color:#cfd5e6}
+  .yes{color:var(--green);font-weight:700}.no{color:var(--bad);font-weight:700}.part-cover{color:var(--orange);font-weight:700}
+  .footer{text-align:center;color:var(--muted);margin-top:70px;font-size:14px}
+  .navlinks{display:flex;justify-content:space-between;margin-top:40px;font-size:15px;flex-wrap:wrap;gap:10px}
+  .navlinks a{color:var(--accent);text-decoration:none}
+  .big-num{font-size:20px;color:var(--green);font-family:"SF Mono",monospace}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="badge">My Reference · Everything, in one place</div>
+  <h1>Neural Networks —<br>Everything I Learned</h1>
+  <p>The complete record of our whole session, in the way you understood it. Every concept, every doubt you cleared, every small detail — nothing left out. Open this tomorrow and it's all here.</p>
+</header>
+<div class="wrap">
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#p1">The big map: AI → ML → DL → NN</a></li>
+    <li><a href="#p2">Every core concept (detailed)</a></li>
+    <li><a href="#p3">The two worked examples</a></li>
+    <li><a href="#p4">Key formulas cheat-sheet</a></li>
+    <li><a href="#p5">Your doubts → how each was cleared</a></li>
+    <li><a href="#p6">What you explained correctly</a></li>
+    <li><a href="#p7">Master checklist (covered / not yet)</a></li>
+    <li><a href="#p8">Full glossary</a></li>
+  </ol>
+</div>
+
+<!-- ══════════ PART 1 ══════════ -->
+<div class="part" id="p1">
+<span class="part-tag">PART 1</span>
+<h2>The big map: AI → ML → DL → Neural Networks</h2>
+<p>These four words are nested inside each other, biggest to smallest:</p>
+<table>
+  <tr><th>Word</th><th>Meaning (as you said it)</th></tr>
+  <tr><td><b>AI</b></td><td>Making a machine do a task intelligently — making a machine smarter. The biggest umbrella.</td></tr>
+  <tr><td><b>Machine Learning (ML)</b></td><td>A way to make a machine smarter by learning patterns <em>from data</em> instead of hand-written rules.</td></tr>
+  <tr><td><b>Deep Learning (DL)</b></td><td>ML done with <em>neural networks that have many layers</em> ("deep" = many layers).</td></tr>
+  <tr><td><b>Neural Network (NN)</b></td><td>The machine itself: a pile of numbers (weights) + a formula that turns inputs into an output.</td></tr>
+</table>
+<p>So: <strong>AI ⊃ ML ⊃ Deep Learning ⊃ (uses) Neural Networks.</strong></p>
+<div class="def"><b>Normal program vs neural network</b> — In a normal program (encoder/rules), <em>you declare the rules manually</em> and it calculates. In a neural network, you give it data (this is right, this is not right) and <em>the network figures out the rules itself</em>. That flip is the whole point.</div>
+<div class="callout"><b>Deep learning, precisely:</b> a stack of neurons = a <span class="term">layer</span>; a stack of layers = "deep"; when the whole thing runs and trains many times, that's deep learning. We are working inside this box.</div>
+</div>
+
+<!-- ══════════ PART 2 ══════════ -->
+<div class="part" id="p2">
+<span class="part-tag">PART 2</span>
+<h2>Every core concept, explained in detail</h2>
+<p class="muted">Each concept: what it is, the small details, and the exact clarification we made together.</p>
+
+<h3 id="c-box"><span class="tick">✓</span>The box (Value) — the two slots</h3>
+<div class="def"><b>Box (Value)</b> — every single number in the network lives in a "box." A box holds <b>two</b> numbers: <span class="term">data</span> and <span class="term">grad</span>.</div>
+<p>Picture a sticky note on every number, with two lines on it:</p>
+<pre>┌─────────────┐
+│ data = 0.4  │  ← the value
+│ grad = -12  │  ← its effect on the loss
+└─────────────┘</pre>
+<ul class="clean">
+  <li><strong>Forward pass</strong> writes the top number (<code>data</code>).</li>
+  <li><strong>Backward pass</strong> writes the bottom number (<code>grad</code>).</li>
+</ul>
+<div class="callout warn"><b>The key clarification:</b> a <em>box is NOT a neuron</em>. A box is one number. A neuron is <em>made of many boxes</em> (its weights, its bias, its output). Don't confuse the two.</div>
+
+<h3 id="c-data"><span class="tick">✓</span>data — the value itself</h3>
+<div class="def"><b>data</b> = the current number inside a box. Just "the value here."</div>
+<div class="callout warn"><b>Clarification you asked for:</b> <code>data</code> does <em>not</em> always mean "weight." It's a general word. A weight-box's data is a weight; the loss-box's data is the loss; an input-box's data is the input. <strong>data = whatever number this box holds</strong>, depending on which box you look at.</div>
+
+<h3 id="c-grad"><span class="tick">✓</span>grad — effect on the loss (sign + number)</h3>
+<div class="def"><b>grad (gradient)</b> = how much this box affects the final loss. It has two parts: a <b>sign</b> and a <b>number</b>.</div>
+<table>
+  <tr><th>part of grad</th><th>what it tells you</th><th>where it's used</th></tr>
+  <tr><td><b>sign</b> (+ / −)</td><td>which way to turn the knob. <b>minus → turn weight UP</b> (to reduce loss); <b>plus → turn weight DOWN</b>.</td><td>gives direction</td></tr>
+  <tr><td><b>number</b> (size)</td><td>how strongly this weight affects the loss = <b>how big a step</b> it takes.</td><td>in gradient descent: <code>new = old − lr × grad</code></td></tr>
+</table>
+<div class="callout good"><b>What the NUMBER does (your final doubt):</b> the size of the grad decides how big the weight's update is. Big grad → big move; small grad → tiny move. That's <em>why</em> training slows down near the answer — as loss flattens, grad shrinks toward 0, so steps get tiny and the weight settles.</div>
+<p><strong>Default:</strong> grad starts at <code>0</code> for every box, and stays 0 until <code>backward()</code> runs.</p>
+
+<h3 id="c-weight"><span class="tick">✓</span>weight — the line, and a box</h3>
+<div class="def"><b>Weight</b> — a learned number on one input, saying "how much does this input matter?" In the drawing, <b>the weight IS the line</b> connecting two circles. That line is also a box (data = the weight value, grad = its effect on loss).</div>
+<ul class="clean">
+  <li>Each input to a neuron has its <em>own</em> weight. 2 inputs → 2 weights into that neuron.</li>
+  <li>Negative weight → that input pushes the answer <em>down</em>.</li>
+  <li><strong>Default:</strong> weights start as <em>random</em> numbers, then training improves them.</li>
+</ul>
+
+<h3 id="c-bias"><span class="tick">✓</span>bias — one per neuron, inside it, and it LEARNS</h3>
+<div class="def"><b>Bias</b> — a single number that belongs to a neuron (not to any input, not on a wire). It's added <em>after</em> the weighted sum, inside the neuron. It shifts the neuron's result up or down.</div>
+<ul class="clean">
+  <li><strong>One bias per neuron.</strong> A layer of 3 neurons → 3 biases. Count the circles (except inputs) → that's the bias count.</li>
+  <li><strong>The bias DOES change during training</strong> — it's a parameter exactly like a weight. It has a grad, and gradient descent updates it: <code>new bias = old bias − lr × grad</code>.</li>
+</ul>
+
+<h3 id="c-input"><span class="tick">✓</span>input — fixed, never changed</h3>
+<div class="def"><b>Input</b> — the numbers describing the one example you feed in (e.g. sunlight = 0.5, water = 1.0). They're the data / the question.</div>
+<div class="callout warn"><b>Clarification you asked for:</b> inputs <em>do</em> affect the loss, but <strong>we never change them</strong> — they're given. The only boxes we ever update are <b>weights and biases</b>. Inputs and the true answer stay fixed.</div>
+
+<h3 id="c-neuron"><span class="tick">✓</span>the neuron — the building block</h3>
+<div class="def"><b>Neuron</b> — a small machine that does <b>three steps</b>: (1) multiply each input by its weight and add them (the <span class="term">weighted sum</span>), (2) add its bias, (3) apply an activation.</div>
+<pre>neuron output = activation( in₁×w₁ + in₂×w₂ + … + bias )
+                            └──── weighted sum ────┘   └┬─┘
+                                                      bias</pre>
+<p>What boxes a single neuron involves: its input boxes (from before), its weight boxes (the lines in), its one bias box, and the output box it produces.</p>
+
+<h3 id="c-activation"><span class="tick">✓</span>activation function — bends the line into a curve</h3>
+<div class="def"><b>Activation function</b> — a small function applied at the end of the neuron that "bends" the result. Without it, the whole network would collapse into one straight line and could only learn straight-line relationships. The bend is what lets it learn <em>complex</em> patterns.</div>
+<table>
+  <tr><th>name</th><th>what it does</th><th>used for</th></tr>
+  <tr><td><b>ReLU</b></td><td>if negative → 0, else keep it</td><td>the default, inside most networks</td></tr>
+  <tr><td><b>Sigmoid</b></td><td>squish any number into 0…1</td><td>output as a probability</td></tr>
+  <tr><td><b>Softmax</b></td><td>turn a list into probabilities that sum to 1</td><td>picking among many options</td></tr>
+</table>
+
+<h3 id="c-layer"><span class="tick">✓</span>layer — a column of neurons; how they connect</h3>
+<div class="def"><b>Layer</b> — one vertical <em>column</em> of neurons. Data flows left → right, one layer at a time. <b>Input layer</b> (first column) → <b>hidden layers</b> (middle) → <b>output layer</b> (last).</div>
+<p>Two rules about how neurons connect (your doubt):</p>
+<ul class="clean">
+  <li><strong>Neurons in the SAME layer do NOT connect to each other.</strong> Each independently takes the same inputs and computes its own output.</li>
+  <li><strong>Every neuron's output feeds EVERY neuron in the next layer</strong> (called "fully connected"). So the outputs of layer 1 become the inputs of layer 2, and so on.</li>
+</ul>
+<pre>LAYER 1            LAYER 2
+ n₁ ──┬──────────▶ m₁
+      ├──────────▶ m₂     (each m gets BOTH n₁ and n₂;
+ n₂ ──┴──────────▶ m₃      n₁ and n₂ never touch each other)</pre>
+<div class="def"><b>Deep learning</b> = a network with <em>many</em> hidden layers ("deep" = many columns, left to right). More columns = deeper; more neurons in a column = wider.</div>
+
+<h3 id="c-output"><span class="tick">✓</span>the output neuron — just another neuron</h3>
+<div class="callout"><b>Your doubt: "how is the final output calculated — is it summing all the neurons?"</b> No. The output is <em>just another neuron</em> using the same formula: it takes the previous layer's outputs as its inputs, multiplies each by a weight, adds them, adds its bias, (optionally activation). It's not special — it's the last neuron.</div>
+
+<h3 id="c-forward"><span class="tick">✓</span>forward pass (inference)</h3>
+<div class="def"><b>Forward pass</b> (also called <b>inference</b>) — running the inputs left → right through every neuron of every layer to get the final output. When you chat with an AI, this is what happens.</div>
+
+<h3 id="c-loss"><span class="tick">✓</span>loss / error — how wrong we are</h3>
+<div class="def"><b>Loss</b> (same word as <b>error</b>) — one number saying how wrong the prediction is. Bigger = worse. <code>0</code> = perfect. A common formula is <span class="term">squared error</span>: <code>(prediction − answer)²</code>.</div>
+<div class="callout warn"><b>Two clarifications:</b> (1) "loss" and "error" are the <em>same thing</em>. (2) There is only <b>ONE loss box for the entire network</b> — at the very end. Not one per neuron.</div>
+
+<h3 id="c-twoformulas"><span class="tick">✓</span>The TWO different formulas (loss vs grad)</h3>
+<p>This confused you a lot — so, clearly, there are <strong>two separate formulas doing two separate jobs</strong>:</p>
+<table>
+  <tr><th></th><th>Loss formula</th><th>Grad formula</th></tr>
+  <tr><td>tells you</td><td><b>how wrong</b> you are</td><td><b>how fast wrongness changes</b> if you nudge the weight</td></tr>
+  <tr><td>example</td><td><code>loss = (w − 10)²</code></td><td><code>grad = 2(w − 10)</code></td></tr>
+  <tr><td>think of it as</td><td>the <b>height</b> of the ground</td><td>the <b>steepness</b> of the slope</td></tr>
+</table>
+<div class="callout good"><b>rate = grad (SAME thing!):</b> the number you called "the rate" IS the grad. <code>2(w−10)</code> is the grad, and "rate" is just another name for it. One number, two names — not two separate calculations. It's the <em>rate of change of the loss</em> as you change the weight, i.e. the slope of the loss.</div>
+
+<h3 id="c-backprop"><span class="tick">✓</span>backpropagation — computing all the grads</h3>
+<div class="def"><b>Backpropagation</b> — the process that computes the <span class="term">grad</span> of <em>every</em> box automatically. It starts at the loss, walks <em>backward</em> to the first layer, and fills in each box's grad.</div>
+<p>How it works (three ideas):</p>
+<ul class="clean">
+  <li><b>Seed:</b> start at the loss with <code>loss.grad = 1</code> (the loss's effect on itself is always 1).</li>
+  <li><b>Local rate:</b> each little step knows only its own simple rate (e.g. "add" step's rate = 1; "square" step's rate = 2×its input).</li>
+  <li><b>Chain rule:</b> multiply the local rates backward along the trail. (Like currency: $1 = 80 rupees, 1 rupee = 100 paise, so $1 = 80×100 = 8000 paise — <em>rates multiply along a chain</em>.)</li>
+</ul>
+<div class="callout"><b>The Karpathy word "derivative":</b> "derivative of g with respect to a" is just fancy math for "a's grad" = "how a affects g." <strong>derivative = grad = rate.</strong> Same thing, three names. Don't let the word scare you.</div>
+
+<h3 id="c-gd"><span class="tick">✓</span>gradient descent — using the grads to update</h3>
+<div class="def"><b>Gradient descent</b> — the process that <em>updates</em> the weights and biases using their grads. The formula: <code>new = old − (learning rate × grad)</code>. The minus sign steps each knob <em>against</em> its grad, i.e. downhill toward less loss.</div>
+<div class="callout good"><b>backprop vs gradient descent (you had this right!):</b> <b>backprop</b> = computes the grads (loss → back to first layer). <b>gradient descent</b> = the next, separate step that moves the weights <em>and biases</em> using those grads. grad = a number · backprop = how we GET it · gradient descent = how we USE it.</div>
+
+<h3 id="c-lr"><span class="tick">✓</span>learning rate — YOU choose it</h3>
+<div class="def"><b>Learning rate (lr)</b> — how big a step gradient descent takes. A small number like <code>0.1</code> or <code>0.01</code>. <strong>You choose it — the network never learns it.</strong></div>
+<p>Where the value comes from: <b>trial and tuning</b>. Pick a common value, run training, watch the loss:</p>
+<pre>loss drops smoothly     → good lr ✅ keep it
+loss explodes / bounces → TOO BIG,  make it smaller (÷10)
+loss crawls very slowly → TOO SMALL, make it bigger  (×10)</pre>
+
+<h3 id="c-loop"><span class="tick">✓</span>the training loop — the whole thing</h3>
+<div class="card">
+<p style="margin:0"><b>1. Forward</b> — run inputs through → get prediction</p>
+<p style="margin:8px 0 0"><b>2. Loss</b> — measure how wrong (loss box)</p>
+<p style="margin:8px 0 0"><b>3. Backprop</b> — fill every box's grad (loss → back)</p>
+<p style="margin:8px 0 0"><b>4. Gradient descent</b> — update every weight & bias: <code>new = old − lr × grad</code></p>
+<p style="margin:8px 0 0;color:var(--muted)">…then repeat, millions of times. Each loop the loss gets a little smaller.</p>
+</div>
+
+<h3 id="c-params"><span class="tick">✓</span>parameters vs hyperparameters</h3>
+<table>
+  <tr><th></th><th>who sets it</th><th>examples</th></tr>
+  <tr><td><b>parameter</b></td><td>the <b>machine</b> learns them</td><td>weights, biases</td></tr>
+  <tr><td><b>hyperparameter</b></td><td><b>you</b> choose them, before training</td><td>learning rate, number of layers, neurons per layer, batch size</td></tr>
+</table>
+
+<h3 id="c-memory"><span class="tick">✓</span>bits, bytes &amp; "billions of parameters"</h3>
+<div class="def"><b>Parameters</b> = all weights + all biases together. "175 billion parameters" = 175 billion of these numbers.</div>
+<ul class="clean">
+  <li><b>bit</b> = one 0/1. <b>byte</b> = 8 bits. Each weight is a number stored in some bytes.</li>
+  <li>float32 = 4 bytes/weight · float16 = 2 bytes · int8 = 1 byte.</li>
+  <li><b>Memory = (number of weights) × (bytes per weight).</b> The "≈2 bytes" rule is just 16-bit storage.</li>
+  <li>7B model × 2 bytes = 14 GB · 70B × 2 = 140 GB. This decides what hardware can run it.</li>
+  <li><b>Quantization</b> = fewer bytes per weight (e.g. int8) → smaller model, fits smaller machines.</li>
+  <li>Your Mac (16 GB) fits ~7B in 16-bit; bigger needs quantization.</li>
+</ul>
+<p><b>One weight = one connection</b> (one line). A model is the same training loop run over millions/billions of these at once — backprop fills every grad in one backward pass.</p>
+</div>
+
+<!-- ══════════ PART 3 ══════════ -->
+<div class="part" id="p3">
+<span class="part-tag">PART 3</span>
+<h2>The two worked examples (real numbers)</h2>
+
+<h3>Example A — the plant network (forward pass, 13 parameters)</h3>
+<p>2 inputs → 3 hidden → 1 output. Inputs: sunlight=0.5, water=1.0. Activation = ReLU. True answer = 1.</p>
+<div class="worked">
+h₁: 0.5×0.4 + 1.0×(−0.2) + 0.1  = 0.10 → ReLU → <span class="hl">0.10</span><br>
+h₂: 0.5×0.1 + 1.0×0.7  + (−0.3) = 0.45 → ReLU → <span class="hl">0.45</span><br>
+h₃: 0.5×(−0.5)+ 1.0×0.3  + (−0.2) = −0.15 → ReLU → <span class="hl">0.00</span>  (negative → clipped)<br>
+<br>
+out: 0.10×0.6 + 0.45×(−0.4) + 0.00×0.5 + 0.05 = <span class="hl">−0.07</span>  (prediction)<br>
+<br>
+loss = (−0.07 − 1)² = <span class="hl">1.1449</span>
+</div>
+<p>13 parameters = 9 weights (6 in, 3 out) + 4 biases (3 hidden, 1 output). Run it: <code>train-your-own-gpt/explore_05_network_forward.py</code>.</p>
+
+<h3>Example B — one weight learning (training loop, loss → 0)</h3>
+<p>Simplest network: one input x=1, one weight w, prediction = w, target = 10. So loss = <code>(w−10)²</code>, grad = <code>2(w−10)</code>. Start w=4, learning rate 0.1:</p>
+<table>
+  <tr><th>round</th><th>w (weight)</th><th>loss (w−10)²</th><th>grad 2(w−10)</th><th>new w = w − 0.1×grad</th></tr>
+  <tr><td>1</td><td>4.00</td><td>36.00</td><td>−12.0</td><td>5.20</td></tr>
+  <tr><td>2</td><td>5.20</td><td>23.04</td><td>−9.6</td><td>6.16</td></tr>
+  <tr><td>3</td><td>6.16</td><td>14.75</td><td>−7.68</td><td>6.93</td></tr>
+  <tr><td>…</td><td>→ 10</td><td>→ 0</td><td>→ 0</td><td>→ 10</td></tr>
+</table>
+<p>The weight climbs 4→10, the loss falls 36→0, and the grad shrinks toward 0 (so steps get gentle near the bottom). Run it: <code>train-your-own-gpt/explore_02_two_boxes.py</code>.</p>
+</div>
+
+<!-- ══════════ PART 4 ══════════ -->
+<div class="part" id="p4">
+<span class="part-tag">PART 4</span>
+<h2>Key formulas cheat-sheet</h2>
+<table>
+  <tr><th>thing</th><th>formula</th></tr>
+  <tr><td>Neuron</td><td><code>output = activation( Σ(input × weight) + bias )</code></td></tr>
+  <tr><td>ReLU</td><td><code>ReLU(x) = max(0, x)</code>  (negatives → 0)</td></tr>
+  <tr><td>Loss (squared error)</td><td><code>loss = (prediction − answer)²</code></td></tr>
+  <tr><td>Grad (= rate) for that loss</td><td><code>grad = 2 × (weight − answer)</code></td></tr>
+  <tr><td>Backprop seed</td><td><code>loss.grad = 1</code></td></tr>
+  <tr><td>Chain rule</td><td>grad of a box = product of local rates along the trail back to it</td></tr>
+  <tr><td>Gradient descent update</td><td><code>new = old − (learning rate × grad)</code>  (for every weight AND bias)</td></tr>
+</table>
+</div>
+
+<!-- ══════════ PART 5 ══════════ -->
+<div class="part" id="p5">
+<span class="part-tag">PART 5</span>
+<h2>Your doubts → how each was cleared</h2>
+<table>
+  <tr><th>Doubt you asked</th><th>The answer that cleared it</th></tr>
+  <tr><td>Is <code>data</code> the same as "weight"?</td><td>No. data = "the number in this box." A weight is one box; the loss/input are other boxes. Every box has its own data.</td></tr>
+  <tr><td>What is the grad in the <em>error</em> box?</td><td>Always <b>1</b> — the loss's effect on itself. It's the <em>seed</em> where backprop starts.</td></tr>
+  <tr><td>Where do the numbers (0.5, 0.4…) come from?</td><td>Inputs = given measurements. Weights & biases = random guesses that training improves.</td></tr>
+  <tr><td>Why does one neuron have TWO weights?</td><td>Because it has two inputs, and each input needs its own weight.</td></tr>
+  <tr><td>Where does the bias come in?</td><td>Inside the neuron, added after the weighted sum. One bias per neuron. And it DOES learn.</td></tr>
+  <tr><td>"loss" vs "error" — two things?</td><td>Same thing, two names.</td></tr>
+  <tr><td>"grad" vs "rate" — two things?</td><td>Same thing, two names. <code>2(w−10)</code> is both.</td></tr>
+  <tr><td>Is a box the same as a neuron?</td><td>No. A box = one number. A neuron is made of many boxes.</td></tr>
+  <tr><td>In the drawing, where is a weight?</td><td>The weight IS the line connecting two circles (and it's a box).</td></tr>
+  <tr><td>How many loss boxes?</td><td>Just ONE, for the whole network, at the very end.</td></tr>
+  <tr><td>Does the bias change during training?</td><td>Yes — it's a parameter, updated just like a weight.</td></tr>
+  <tr><td>Do inputs change? Do they affect the loss?</td><td>They affect the loss, but we never change them. We only update weights & biases.</td></tr>
+  <tr><td>How do neurons/layers connect?</td><td>Same-layer neurons don't touch; every neuron feeds every neuron in the next layer.</td></tr>
+  <tr><td>How is the final output calculated?</td><td>The output is just another neuron — same weighted-sum + bias formula.</td></tr>
+  <tr><td>The Karpathy word "derivative"?</td><td>= grad = rate. Same thing. "derivative of g w.r.t. a" = "a's grad."</td></tr>
+  <tr><td>backprop vs gradient descent?</td><td>backprop computes grads; gradient descent uses them to update weights/biases.</td></tr>
+  <tr><td>What does the grad's NUMBER do?</td><td>Sets the size of the weight's update (in <code>new = old − lr × grad</code>). Big grad → big move.</td></tr>
+  <tr><td>Where does the learning rate come from?</td><td>You choose it (a hyperparameter). Find a good value by watching the loss and tuning.</td></tr>
+</table>
+</div>
+
+<!-- ══════════ PART 6 ══════════ -->
+<div class="part" id="p6">
+<span class="part-tag">PART 6</span>
+<h2>What you explained correctly (your wins)</h2>
+<ul class="clean">
+  <li>✅ The full training loop: forward → loss → backprop → gradient descent → repeat millions of times.</li>
+  <li>✅ Loss tells how wrong; higher = bad, lower/0 = good.</li>
+  <li>✅ Grad's sign: minus → turn weight up, plus → turn weight down.</li>
+  <li>✅ backprop = "computing the grad for the entire network."</li>
+  <li>✅ The neuron formula: Σ(input × weight) + bias, then activation.</li>
+  <li>✅ Every box carries two numbers: data and grad.</li>
+  <li>✅ A weight is a line; the output is just another neuron; each layer feeds the next.</li>
+  <li>✅ The bias and weights both get updated with <code>new = old − lr × grad</code>.</li>
+  <li>✅ Your own analogy: the computation graph is like a linked list (correct!).</li>
+</ul>
+</div>
+
+<!-- ══════════ PART 7 ══════════ -->
+<div class="part" id="p7">
+<span class="part-tag">PART 7</span>
+<h2>Master checklist — covered / not yet</h2>
+<h3 style="color:var(--green)">✅ Covered &amp; understood (Stage 1 — Neural Networks foundation)</h3>
+<table>
+  <tr><td><span class="yes">✓</span></td><td>AI vs ML vs Deep Learning vs Neural Network</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>Normal program (rules) vs neural network (learns rules from data)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>The box (Value): data &amp; grad, the two slots</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>data (the value) — and that it isn't always a weight</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>grad — sign (direction) + number (step size)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>weight (= the line, a box, random at start)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>bias (one per neuron, inside, and it learns)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>input (fixed, never updated)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>the neuron formula (weighted sum + bias → activation)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>activation functions (ReLU, sigmoid, softmax) + why non-linearity</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>layers, hidden layers, deep learning, fully-connected</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>the output neuron (just another neuron)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>forward pass / inference</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>loss / error (= same) + only one loss box</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>loss formula vs grad formula (two different jobs)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>grad = rate = derivative (all the same)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>backpropagation (seed, local rates, chain rule)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>gradient descent (update formula) vs backprop</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>learning rate (you choose it; tuning by watching loss)</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>the full training loop</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>parameters vs hyperparameters</td></tr>
+  <tr><td><span class="yes">✓</span></td><td>bits/bytes/memory, quantization, "billions of parameters"</td></tr>
+</table>
+
+<h3 style="color:var(--orange)">◐ Mentioned but not yet gone deep (next up)</h3>
+<table>
+  <tr><td><span class="part-cover">◐</span></td><td><b>Overfitting &amp; generalization</b> — the network memorizing vs truly learning (it's in the full lesson, but we didn't discuss it live)</td></tr>
+  <tr><td><span class="part-cover">◐</span></td><td><b>train / validation / test split</b> — how you check for overfitting</td></tr>
+  <tr><td><span class="part-cover">◐</span></td><td><b>batches &amp; epochs</b> — training on chunks of data, and full passes</td></tr>
+</table>
+
+<h3 style="color:var(--bad)">✗ Not covered yet (future stages)</h3>
+<table>
+  <tr><td><span class="no">✗</span></td><td>Building &amp; training a real network in <b>PyTorch</b> yourself (Stage 2+)</td></tr>
+  <tr><td><span class="no">✗</span></td><td><b>Embeddings</b> in depth (turning words/things into vectors)</td></tr>
+  <tr><td><span class="no">✗</span></td><td>Other network types: <b>CNN</b> (images), <b>RNN</b> (sequences)</td></tr>
+  <tr><td><span class="no">✗</span></td><td>Better optimizers (<b>momentum, Adam</b>) — smarter versions of gradient descent</td></tr>
+  <tr><td><span class="no">✗</span></td><td><b>Regularization / dropout</b>, weight initialization — tricks for better training</td></tr>
+  <tr><td><span class="no">✗</span></td><td><b>Attention &amp; Transformers &amp; LLMs</b> (see <code>transformers.html</code> — that's the next big topic)</td></tr>
+  <tr><td><span class="no">✗</span></td><td>Tokenization, generation, temperature (LLM side — separate lesson)</td></tr>
+</table>
+<div class="callout good"><b>Bottom line:</b> you have completed the <b>entire Neural Networks foundation</b>. Everything above the orange line is solid. The orange (overfitting/batches) is a short next step; the red is future stages (real coding, then LLMs).</div>
+</div>
+
+<!-- ══════════ PART 8 ══════════ -->
+<div class="part" id="p8">
+<span class="part-tag">PART 8</span>
+<h2>Full glossary (every term, one line)</h2>
+<table>
+  <tr><td><b>AI</b></td><td>making a machine do tasks intelligently</td></tr>
+  <tr><td><b>Machine Learning</b></td><td>making a machine smarter by learning patterns from data</td></tr>
+  <tr><td><b>Deep Learning</b></td><td>ML with neural networks that have many layers</td></tr>
+  <tr><td><b>Neural network</b></td><td>a pile of weights + a formula that turns inputs into an output</td></tr>
+  <tr><td><b>Box (Value)</b></td><td>one number, holding two slots: data &amp; grad</td></tr>
+  <tr><td><b>data</b></td><td>the current value in a box</td></tr>
+  <tr><td><b>grad / gradient / rate / derivative</b></td><td>how much a box affects the loss (sign = direction, number = step size) — all the same word</td></tr>
+  <tr><td><b>Weight</b></td><td>a learned number on an input (the line in the drawing)</td></tr>
+  <tr><td><b>Bias</b></td><td>a learned number inside a neuron, added after the weighted sum</td></tr>
+  <tr><td><b>Input</b></td><td>the given numbers describing one example (never changed)</td></tr>
+  <tr><td><b>Weighted sum</b></td><td>each input × its weight, all added</td></tr>
+  <tr><td><b>Neuron</b></td><td>weighted sum + bias → activation</td></tr>
+  <tr><td><b>Activation (ReLU/sigmoid/softmax)</b></td><td>the bend that adds non-linearity</td></tr>
+  <tr><td><b>Layer</b></td><td>a column of neurons; hidden layers are the middle ones</td></tr>
+  <tr><td><b>Fully connected</b></td><td>every neuron feeds every neuron in the next layer</td></tr>
+  <tr><td><b>Forward pass / inference</b></td><td>running inputs through to get a prediction</td></tr>
+  <tr><td><b>Loss / error</b></td><td>one number for how wrong the prediction is</td></tr>
+  <tr><td><b>Backpropagation</b></td><td>walking backward from the loss, multiplying local rates, to fill every grad</td></tr>
+  <tr><td><b>Chain rule</b></td><td>rates multiply along a chain of steps</td></tr>
+  <tr><td><b>Gradient descent</b></td><td>new = old − learning_rate × grad (update every weight &amp; bias)</td></tr>
+  <tr><td><b>Learning rate</b></td><td>how big each step is (you choose it — a hyperparameter)</td></tr>
+  <tr><td><b>Training loop</b></td><td>forward → loss → backprop → gradient descent, repeated</td></tr>
+  <tr><td><b>Parameter</b></td><td>a number the machine learns (weights, biases)</td></tr>
+  <tr><td><b>Hyperparameter</b></td><td>a setting you choose (learning rate, #layers, batch size)</td></tr>
+  <tr><td><b>Epoch / batch</b></td><td>one full pass over all data / a small handful of examples per step</td></tr>
+  <tr><td><b>Overfitting</b></td><td>memorizing training data instead of learning the pattern</td></tr>
+  <tr><td><b>Generalization</b></td><td>doing well on new, unseen data</td></tr>
+  <tr><td><b>Quantization</b></td><td>storing weights in fewer bytes so the model fits smaller hardware</td></tr>
+</table>
+</div>
+
+<div class="navlinks">
+  <a href="neural-networks-complete.html">‹ The teaching lesson</a>
+  <a href="../train-your-own-gpt/course.html">Course hub</a>
+  <a href="transformers.html">Next topic: LLMs ›</a>
+</div>
+<p class="footer">Your complete Neural Networks reference. Everything we cleared, in one place. 🧠✅</p>
+</div>
+</body>
+</html>

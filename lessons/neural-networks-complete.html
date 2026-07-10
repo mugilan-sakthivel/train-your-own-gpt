@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Networks — The Complete Lesson (start to end)</title>
+<style>
+  :root{
+    --bg:#0f1117;--panel:#171a23;--panel2:#1d2130;--ink:#e8ebf2;--muted:#9aa3b7;
+    --line:#2a2f40;--accent:#5b8cff;--accent2:#7c5cff;--green:#36d399;--orange:#fbbd23;--bad:#f87272;--chip:#232838;--maxw:860px;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px 120px}
+  header.hero{background:radial-gradient(1200px 520px at 50% -10%,rgba(91,140,255,.25),transparent 60%);padding:64px 20px 30px;text-align:center}
+  header.hero h1{font-size:40px;line-height:1.1;margin:0 0 12px;letter-spacing:-.5px}
+  header.hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:18px}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--accent);padding:6px 14px;border-radius:999px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:18px}
+  /* table of contents */
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 24px;margin:28px 0}
+  .toc h3{margin:0 0 12px;font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .toc ol{margin:0;padding-left:22px;columns:2;column-gap:30px}
+  @media(max-width:600px){.toc ol{columns:1}}
+  .toc li{margin:5px 0}
+  .toc a{color:#cfd5e6;text-decoration:none}.toc a:hover{color:var(--accent)}
+  /* chapters */
+  .ch{margin:54px 0 0;scroll-margin-top:14px}
+  .ch-num{display:inline-block;background:var(--accent);color:#fff;font-weight:800;font-size:14px;padding:3px 11px;border-radius:8px;margin-bottom:10px}
+  h2{font-size:27px;margin:6px 0 4px;letter-spacing:-.3px}
+  h3{font-size:19px;margin:26px 0 6px;color:#fff}
+  p{margin:13px 0}.muted{color:var(--muted)}strong{color:#fff}
+  .lead{font-size:18px;color:#cfd5e6}
+  code{background:#0b0d13;border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:14px;color:#bcd0ff}
+  /* term definition box */
+  .def{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent2);border-radius:0 12px 12px 0;padding:13px 17px;margin:16px 0}
+  .def b{color:var(--accent2)}
+  /* worked-numbers box */
+  .worked{background:#0b0d13;border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin:16px 0;font-family:"SF Mono",ui-monospace,monospace;font-size:14.5px;line-height:1.9}
+  .worked .hl{color:var(--green)}
+  /* say-it-back checkpoint */
+  .sayback{background:linear-gradient(180deg,rgba(54,211,153,.08),transparent);border:1px dashed var(--green);border-radius:12px;padding:14px 17px;margin:20px 0}
+  .sayback b{color:var(--green)}
+  /* generic callout */
+  .callout{border-left:4px solid var(--accent);background:var(--panel2);border-radius:0 12px 12px 0;padding:13px 17px;margin:18px 0}
+  .callout.warn{border-color:var(--orange)} .callout.good{border-color:var(--green)}
+  .callout b{color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin:20px 0}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left}
+  th{background:var(--panel2);color:#fff}
+  svg{max-width:100%;height:auto;display:block;margin:8px auto}
+  .fig-cap{text-align:center;color:var(--muted);font-size:13.5px;margin-top:6px}
+  .term{color:var(--accent2);font-weight:600}
+  /* widgets */
+  .ctrl{display:flex;align-items:center;gap:12px;margin:9px 0}
+  .ctrl label{width:96px;color:var(--muted);font-size:14px}
+  .ctrl input[type=range]{flex:1;accent-color:var(--accent2)}
+  .ctrl .val{width:56px;text-align:right;font-family:"SF Mono",monospace;color:#bcd0ff;font-size:14px}
+  select{background:#0b0d13;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px}
+  button{background:var(--accent2);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer}
+  button.ghost{background:var(--chip);border:1px solid var(--line);color:var(--ink);font-weight:600}
+  button:active{transform:translateY(1px)}
+  .readout{font-family:"SF Mono",monospace;font-size:14px;line-height:1.85;background:#0b0d13;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px}
+  .readout .big{font-size:19px;color:var(--green)}
+  hr{border:0;border-top:1px solid var(--line);margin:48px 0}
+  ul.clean{padding-left:20px}ul.clean li{margin:7px 0}
+  .pill{display:inline-block;padding:1px 8px;border-radius:6px;background:var(--chip);border:1px solid var(--line);font-size:13px}
+  .footer{text-align:center;color:var(--muted);margin-top:70px;font-size:14px}
+  .navlinks{display:flex;justify-content:space-between;margin-top:40px;font-size:15px;flex-wrap:wrap;gap:10px}
+  .navlinks a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="badge">The Complete Lesson · Start to End</div>
+  <h1>Neural Networks,<br>From Zero</h1>
+  <p>Everything, in order, nothing skipped. One example carried the whole way. Every word defined before it's used. Read top to bottom — and at each ✅ checkpoint, say the idea back in your own words.</p>
+</header>
+<div class="wrap">
+
+<div class="toc">
+  <h3>What we'll cover</h3>
+  <ol>
+    <li><a href="#c1">What a neural network is</a></li>
+    <li><a href="#c2">Our one example</a></li>
+    <li><a href="#c3">The neuron: inputs &amp; weights</a></li>
+    <li><a href="#c4">The bias</a></li>
+    <li><a href="#c5">The activation function</a></li>
+    <li><a href="#c6">Layers &amp; a full network</a></li>
+    <li><a href="#c7">The forward pass (real numbers)</a></li>
+    <li><a href="#c8">The loss: measuring wrongness</a></li>
+    <li><a href="#c9">What "learning" means</a></li>
+    <li><a href="#c10">data vs grad</a></li>
+    <li><a href="#c11">The gradient (the compass)</a></li>
+    <li><a href="#c12">Backpropagation</a></li>
+    <li><a href="#c13">Gradient descent &amp; learning rate</a></li>
+    <li><a href="#c14">The training loop</a></li>
+    <li><a href="#c15">Batches &amp; epochs</a></li>
+    <li><a href="#c16">Overfitting &amp; generalization</a></li>
+    <li><a href="#c17">Parameters vs hyperparameters</a></li>
+    <li><a href="#c18">The whole picture</a></li>
+    <li><a href="#c19">Glossary</a></li>
+  </ol>
+</div>
+
+<!-- ════════ 1 ════════ -->
+<div class="ch" id="c1">
+<span class="ch-num">CHAPTER 1</span>
+<h2>What a neural network is</h2>
+<p class="lead">A neural network is a machine that learns to turn inputs into the right answer — not by you writing rules, but by it adjusting numbers from examples.</p>
+<p>Normal program: <strong>you write the rule.</strong> <code>if temperature &gt; 100: alert()</code>. You decide everything.</p>
+<p>Neural network: <strong>you show examples, it finds the rule itself.</strong> You give it 10,000 photos labelled "cat / not cat," and it works out the pattern — including patterns no human could write down.</p>
+<div class="def"><b>Neural network</b> — a big pile of numbers (called <span class="term">weights</span>) plus a simple formula that turns an input into an output. "Learning" = slowly adjusting those numbers until the answers are good.</div>
+<p>That's the one sentence the whole lesson builds on. The rest is just: <em>what are those numbers, how does the formula work, and how do they get adjusted?</em></p>
+<div class="sayback"><b>✅ Say it back:</b> In one line — what's the difference between a normal program and a neural network?</div>
+</div>
+
+<!-- ════════ 2 ════════ -->
+<div class="ch" id="c2">
+<span class="ch-num">CHAPTER 2</span>
+<h2>Our one example (we'll use it the whole way)</h2>
+<p>To avoid confusion, we use <strong>a single example for the entire lesson</strong>. Here it is:</p>
+<div class="card">
+<p style="margin:0"><strong>Goal:</strong> predict whether a plant is <strong>healthy</strong> (answer near <code>1</code> = healthy, near <code>0</code> = not).</p>
+<p style="margin:10px 0 0"><strong>Inputs</strong> (the two numbers describing this plant):</p>
+<ul class="clean" style="margin:6px 0">
+  <li><code>sunlight = 0.5</code></li>
+  <li><code>water = 1.0</code></li>
+</ul>
+<p style="margin:0"><strong>The true answer</strong> for this plant: <code>1</code> (it really is healthy). The network must learn to output something close to 1.</p>
+</div>
+<div class="callout"><b>Where do the numbers come from?</b> The inputs (0.5, 1.0) are measurements of one plant. The true answer (1) is the correct label we already know. Every other number you'll meet (weights, biases) starts as a <em>random guess</em> and gets improved by training. <strong>Nothing is magic — every number has an origin.</strong></div>
+<div class="sayback"><b>✅ Say it back:</b> What are the two inputs, and what is the answer we want the network to produce?</div>
+</div>
+
+<!-- ════════ 3 ════════ -->
+<div class="ch" id="c3">
+<span class="ch-num">CHAPTER 3</span>
+<h2>The neuron: inputs &amp; weights</h2>
+<p>The whole network is built from one tiny part: the <span class="term">neuron</span>. A neuron takes the inputs, and does the simplest useful thing — it <strong>weighs</strong> them.</p>
+<div class="def"><b>Weight</b> — a number attached to one input that says "how much does this input matter?" Each input gets its own weight. Big weight = this input matters a lot; negative weight = this input pushes the answer <em>down</em>.</div>
+<p>Step one of a neuron: multiply each input by its weight, then add the results. Let's do it for one neuron — call it <strong>h₁</strong> — with weights <code>0.4</code> and <code>−0.2</code> (random starting values):</p>
+<div class="worked">
+sunlight × its weight = 0.5 × 0.4   = <span class="hl">0.20</span><br>
+water    × its weight = 1.0 × (−0.2) = <span class="hl">−0.20</span><br>
+add them: 0.20 + (−0.20) = <span class="hl">0.00</span>
+</div>
+<p>So far h₁ has computed <code>0.00</code>. This "multiply each input by its weight and add" is called the <span class="term">weighted sum</span>. That's the heart of every neuron.</p>
+<div class="callout warn"><b>Why does ONE neuron have TWO weights?</b> Because it has two inputs, and <em>each input needs its own weight</em>. 5 inputs → 5 weights. The neuron weighs every input it receives.</div>
+<div class="sayback"><b>✅ Say it back:</b> A neuron has 2 inputs. How many weights does it have, and what does a weight mean?</div>
+</div>
+
+<!-- ════════ 4 ════════ -->
+<div class="ch" id="c4">
+<span class="ch-num">CHAPTER 4</span>
+<h2>The bias</h2>
+<p>After the weighted sum, the neuron adds one more number: the <span class="term">bias</span>.</p>
+<div class="def"><b>Bias</b> — a single number that belongs to the neuron (not to any input). It's added <em>after</em> the weighted sum. It shifts the neuron's result up or down — think of it as the neuron's "default lean" before inputs arrive.</div>
+<p>h₁'s bias is <code>0.1</code>. Continue from the <code>0.00</code> we had:</p>
+<div class="worked">
+weighted sum = 0.00<br>
++ bias       = 0.00 + 0.1 = <span class="hl">0.10</span>
+</div>
+<div class="callout"><b>Important:</b> the bias lives <em>inside</em> the neuron, not on a wire/connection. So if a neuron has 2 input-weights, it still has just 1 bias. The weights are on the wires; the bias is in the neuron.</div>
+<div class="sayback"><b>✅ Say it back:</b> Where is the bias added — before or after the weighted sum? And is there one bias per input, or one per neuron?</div>
+</div>
+
+<!-- ════════ 5 ════════ -->
+<div class="ch" id="c5">
+<span class="ch-num">CHAPTER 5</span>
+<h2>The activation function</h2>
+<p>The last thing a neuron does: pass its result through an <span class="term">activation function</span>.</p>
+<div class="def"><b>Activation function</b> — a small function that "bends" the neuron's output. The most common is <span class="term">ReLU</span>: <code>if the number is negative → make it 0, otherwise keep it</code>.</div>
+<p>h₁ had <code>0.10</code>. ReLU of a positive number leaves it alone:</p>
+<div class="worked">ReLU(0.10) = 0.10   →  h₁ is finally <span class="hl">0.10</span></div>
+<h3>Why do we even need it?</h3>
+<p>Without an activation, stacking many neurons would collapse into one big <em>straight-line</em> formula — it could only learn straight-line relationships. Real problems (images, language, our plant) are full of curves. <strong>The activation adds the "bend" that lets the network learn complicated shapes.</strong> That bend is the whole reason deep networks are powerful.</p>
+<table>
+  <tr><th>Activation</th><th>What it does</th><th>Used for</th></tr>
+  <tr><td>ReLU</td><td>negatives → 0, else keep</td><td>the default, inside most networks</td></tr>
+  <tr><td>Sigmoid</td><td>squish any number into 0…1</td><td>output as a probability</td></tr>
+  <tr><td>Softmax</td><td>turn a list into probabilities summing to 1</td><td>picking among many options</td></tr>
+</table>
+
+<h3>Play with one neuron</h3>
+<p>Drag the sliders. Watch the three steps (weighted sum → +bias → activation) recompute live.</p>
+<div class="card">
+  <div class="ctrl"><label>input 1</label><input id="x1" type="range" min="-2" max="2" step="0.1" value="0.5"><span class="val" id="x1v">0.5</span></div>
+  <div class="ctrl"><label>input 2</label><input id="x2" type="range" min="-2" max="2" step="0.1" value="1.0"><span class="val" id="x2v">1.0</span></div>
+  <div class="ctrl"><label>weight 1</label><input id="w1" type="range" min="-2" max="2" step="0.1" value="0.4"><span class="val" id="w1v">0.4</span></div>
+  <div class="ctrl"><label>weight 2</label><input id="w2" type="range" min="-2" max="2" step="0.1" value="-0.2"><span class="val" id="w2v">-0.2</span></div>
+  <div class="ctrl"><label>bias</label><input id="bb" type="range" min="-2" max="2" step="0.1" value="0.1"><span class="val" id="bbv">0.1</span></div>
+  <div class="ctrl"><label>activation</label><select id="act"><option value="relu" selected>ReLU</option><option value="sigmoid">Sigmoid</option><option value="none">none</option></select></div>
+  <div class="readout" id="neuronOut"></div>
+</div>
+<div class="sayback"><b>✅ Say it back:</b> What are the three things a neuron does, in order? And why do we need the activation at all?</div>
+</div>
+
+<!-- ════════ 6 ════════ -->
+<div class="ch" id="c6">
+<span class="ch-num">CHAPTER 6</span>
+<h2>Layers &amp; a full network</h2>
+<p>One neuron is weak. Power comes from <strong>connecting many</strong>. Put several neurons side by side → a <span class="term">layer</span>. Stack layers → a <span class="term">network</span>.</p>
+<p>Our example uses <strong>2 inputs → 3 hidden neurons → 1 output neuron</strong>:</p>
+<div class="card" style="text-align:center">
+<svg viewBox="0 0 620 300" width="620">
+  <g stroke="#2a2f40" stroke-width="1">
+    <line x1="80" y1="110" x2="250" y2="60"/><line x1="80" y1="110" x2="250" y2="150"/><line x1="80" y1="110" x2="250" y2="240"/>
+    <line x1="80" y1="200" x2="250" y2="60"/><line x1="80" y1="200" x2="250" y2="150"/><line x1="80" y1="200" x2="250" y2="240"/>
+    <line x1="250" y1="60" x2="430" y2="150"/><line x1="250" y1="150" x2="430" y2="150"/><line x1="250" y1="240" x2="430" y2="150"/>
+    <line x1="430" y1="150" x2="560" y2="150"/>
+  </g>
+  <g font-family="-apple-system,sans-serif" font-size="12">
+    <circle cx="80" cy="110" r="20" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/><text x="80" y="114" fill="#fff" text-anchor="middle">sun</text>
+    <circle cx="80" cy="200" r="20" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/><text x="80" y="204" fill="#fff" text-anchor="middle">water</text>
+    <circle cx="250" cy="60" r="20" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="250" y="64" fill="#fff" text-anchor="middle">h₁</text>
+    <circle cx="250" cy="150" r="20" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="250" y="154" fill="#fff" text-anchor="middle">h₂</text>
+    <circle cx="250" cy="240" r="20" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="250" y="244" fill="#fff" text-anchor="middle">h₃</text>
+    <circle cx="430" cy="150" r="22" fill="#1d2130" stroke="#36d399" stroke-width="2.5"/><text x="430" y="154" fill="#fff" text-anchor="middle">out</text>
+    <text x="560" y="154" fill="#36d399" text-anchor="middle">answer</text>
+    <text x="80" y="250" fill="#9aa3b7" text-anchor="middle">inputs</text>
+    <text x="250" y="285" fill="#9aa3b7" text-anchor="middle">hidden layer</text>
+  </g>
+</svg>
+<div class="fig-cap">Each circle is a neuron (Chapter 3–5). Each line is a weight.</div>
+</div>
+<div class="def"><b>Hidden layer</b> — the neurons in the middle (not input, not output). <b>Deep learning</b> just means a network with many hidden layers — "deep" = many layers tall.</div>
+<p>Count the numbers: 2×3 = 6 weights in, 3×1 = 3 weights out (9 weights), plus 1 bias per hidden + 1 for output = 4 biases. <strong>9 + 4 = 13 parameters.</strong></p>
+<div class="def"><b>Parameters</b> — all the weights + all the biases together. They're the network's entire learned knowledge. "175 billion parameters" = 175 billion of these numbers.</div>
+<p>What do hidden layers <em>do</em>? Each learns to detect more abstract things automatically. For a face photo: layer 1 finds edges → layer 2 combines them into shapes → layer 3 into eyes/noses → output says "face." <strong>Nobody programmed "edge" or "eye" — the network discovered them.</strong></p>
+<div class="sayback"><b>✅ Say it back:</b> What's a "layer"? What does "deep" mean? And what are "parameters"?</div>
+</div>
+
+<!-- ════════ 7 ════════ -->
+<div class="ch" id="c7">
+<span class="ch-num">CHAPTER 7</span>
+<h2>The forward pass (with real numbers)</h2>
+<div class="def"><b>Forward pass</b> — running the inputs through the whole network, left to right, to get the answer. (When you chat with an AI, this is what happens — also called <span class="term">inference</span>.)</div>
+<p>Let's run our plant all the way through. Every neuron does Chapter 3–5: weighted sum → +bias → ReLU. Here are all 13 numbers in action:</p>
+<div class="worked">
+<b>Hidden layer</b> (inputs: sun=0.5, water=1.0)<br>
+h₁: 0.5×0.4 + 1.0×(−0.2) + 0.1  = 0.10 → ReLU → <span class="hl">0.10</span><br>
+h₂: 0.5×0.1 + 1.0×0.7  + (−0.3) = 0.45 → ReLU → <span class="hl">0.45</span><br>
+h₃: 0.5×(−0.5)+ 1.0×0.3  + (−0.2) = −0.15 → ReLU → <span class="hl">0.00</span>  (negative, clipped to 0)<br>
+<br>
+<b>Output neuron</b> (inputs: h₁,h₂,h₃ ; weights 0.6,−0.4,0.5 ; bias 0.05)<br>
+0.10×0.6 + 0.45×(−0.4) + 0.00×0.5 + 0.05 = <span class="hl">−0.07</span><br>
+<br>
+<b>Prediction = −0.07</b>
+</div>
+<p>So with its current (random) weights, the network predicts <code>−0.07</code>. The true answer was <code>1</code>. It's badly wrong — which is expected, because the weights are still random. Fixing that is the rest of the lesson.</p>
+<div class="callout good"><b>You can run this yourself:</b> <code>explore_05_network_forward.py</code> in the <code>train-your-own-gpt</code> folder does exactly this — change any number and watch the prediction move.</div>
+<div class="sayback"><b>✅ Say it back:</b> What is a forward pass? Our network predicted −0.07 but the answer was 1 — why is it so wrong right now?</div>
+</div>
+
+<!-- ════════ 8 ════════ -->
+<div class="ch" id="c8">
+<span class="ch-num">CHAPTER 8</span>
+<h2>The loss: measuring wrongness</h2>
+<p>To improve, the network first needs to know <em>how wrong</em> it is, as a single number.</p>
+<div class="def"><b>Loss</b> (also called <b>error</b> — same thing) — one number saying how wrong the prediction is. Bigger = more wrong. <code>0</code> = perfect. A common formula is <span class="term">squared error</span>: <code>(prediction − answer)²</code>.</div>
+<div class="worked">
+prediction = −0.07,  true answer = 1<br>
+loss = (−0.07 − 1)² = (−1.07)² = <span class="hl">1.1449</span>
+</div>
+<p>So our loss is <code>1.14</code>. The <strong>entire goal of training is to make this number as small as possible.</strong> Everything from here is about shrinking the loss.</p>
+<div class="callout warn"><b>Two words, one meaning:</b> "loss" and "error" are the same thing. Don't let the two names confuse you.</div>
+<div class="sayback"><b>✅ Say it back:</b> What is the loss, and what number would a perfect prediction give?</div>
+</div>
+
+<!-- ════════ 9 ════════ -->
+<div class="ch" id="c9">
+<span class="ch-num">CHAPTER 9</span>
+<h2>What "learning" means</h2>
+<p>The network has 13 parameters (knobs). Right now they're random, so the loss is high. <strong>Learning = turning the knobs to make the loss small.</strong></p>
+<p>To turn a knob the right way, we need to answer one question for each knob:</p>
+<div class="callout"><b>The one question:</b> "If I nudge this weight up a tiny bit, does the loss go up or down — and by how much?"</div>
+<p>If nudging a weight <em>up</em> makes the loss go <em>down</em>, we should increase that weight. If it makes the loss go up, we decrease it. Answer this for all 13 knobs, nudge them all the right way, and the loss drops. Do it thousands of times → trained network. That's the whole idea. The next chapters make it precise.</p>
+<div class="sayback"><b>✅ Say it back:</b> In one sentence — what does "learning" actually mean for a network?</div>
+</div>
+
+<!-- ════════ 10 ════════ -->
+<div class="ch" id="c10">
+<span class="ch-num">CHAPTER 10</span>
+<h2>data vs grad (the two slots in every box)</h2>
+<p>To track all this, think of every number in the network as a little box with <strong>two slots</strong>:</p>
+<div class="def"><b>data</b> = the number itself (its current value). &nbsp;|&nbsp; <b>grad</b> = how much this number affects the loss (the answer to "the one question" from Chapter 9).</div>
+<table>
+  <tr><th>box</th><th>its <b>data</b></th><th>its <b>grad</b> means…</th></tr>
+  <tr><td>a weight</td><td>e.g. 0.4</td><td>how much the loss changes if this weight nudges up</td></tr>
+  <tr><td>the loss</td><td>e.g. 1.14</td><td>always 1 (the loss vs itself)</td></tr>
+</table>
+<div class="callout"><b>Careful — "data" does not mean "weight."</b> <code>data</code> just means "the number in this box." A weight is one box (its data is the weight value); the loss is another box (its data is the loss value). Every box has a data and a grad.</div>
+<div class="sayback"><b>✅ Say it back:</b> What's the difference between a box's <code>data</code> and its <code>grad</code>?</div>
+</div>
+
+<!-- ════════ 11 ════════ -->
+<div class="ch" id="c11">
+<span class="ch-num">CHAPTER 11</span>
+<h2>The gradient (the compass)</h2>
+<div class="def"><b>Gradient (grad)</b> — a number telling you, for one weight: which way to turn it (the <b>sign</b>) and how strongly it matters (the <b>size</b>). Minus = turn the weight up to reduce loss; plus = turn it down.</div>
+<p>Let's see a grad with the simplest possible network so the numbers stay clean: <strong>one input <code>x=1</code>, one weight <code>w</code>, prediction = <code>x·w = w</code></strong>, and we want the answer to be <code>10</code>. Then loss = <code>(w − 10)²</code>.</p>
+<p>Say <code>w = 4</code> right now. Let's <em>measure</em> the grad by nudging (this is literally what grad means):</p>
+<div class="worked">
+loss at w=4:     (4 − 10)²    = 36<br>
+loss at w=4.01:  (4.01 − 10)² = 35.8801<br>
+change in loss = 35.8801 − 36 = −0.1199  for a +0.01 nudge<br>
+rate = −0.1199 / 0.01 ≈ <span class="hl">−12</span>   ← this is the grad
+</div>
+<p>So <code>w.grad = −12</code>. The <strong>minus sign</strong> says "nudge w <em>up</em> to reduce loss." (There's a shortcut formula for this curve — <code>2(w−10) = 2(4−10) = −12</code> — but you just <em>measured</em> it directly, no formula needed.)</p>
+<div class="sayback"><b>✅ Say it back:</b> <code>w.grad = −12</code>. Do we turn w up or down, and how do you know from the grad?</div>
+</div>
+
+<!-- ════════ 12 ════════ -->
+<div class="ch" id="c12">
+<span class="ch-num">CHAPTER 12</span>
+<h2>Backpropagation (how grad is computed automatically)</h2>
+<p>For one weight we measured the grad by hand. But a real network has millions of weights — no human can do that. <span class="term">Backpropagation</span> is the machine that computes every weight's grad automatically.</p>
+<p>The key: a weight doesn't touch the loss directly — it goes through steps (a <span class="term">trail</span>). Our tiny loss <code>(w−10)²</code> is really two steps:</p>
+<div class="worked">
+step 1 (subtract): d = w − 10<br>
+step 2 (square):   e = d²   ← the loss
+</div>
+<div class="callout"><b>Each step knows only its own simple "rate":</b><br>
+• subtract step: nudge w up by 1 → d goes up by 1. Local rate = <b>1</b>.<br>
+• square step (e = d², at d=−6): local rate = <b>2×d = −12</b>.</div>
+<h3>Why you multiply the rates (the chain rule)</h3>
+<p>Think of currency: $1 = 80 rupees, 1 rupee = 100 paise, so $1 = 80×100 = 8000 paise. <strong>Rates multiply along a chain.</strong> Same here — to get how <code>w</code> affects the loss, multiply the rates along the trail.</p>
+<h3>Walk the trail backward (this is backprop)</h3>
+<div class="worked">
+e.grad = 1                          ← the seed (loss vs itself)<br>
+d.grad = (rate d→e) × e.grad = (−12) × 1  = <span class="hl">−12</span><br>
+w.grad = (rate w→d) × d.grad = (1) × (−12) = <span class="hl">−12</span>
+</div>
+<p>Backprop just rebuilt <code>w.grad = −12</code> — the same number we measured — by starting with <code>1</code> at the loss and multiplying local rates <em>backward</em>. Because each step is simple and local, you can chain a million of them. That's how every weight gets its grad.</p>
+<div class="callout good"><b>See it move:</b> the page <code>backprop-animated.html</code> animates this exact backward walk — first for one weight, then through a 13-weight network.</div>
+<div class="sayback"><b>✅ Say it back:</b> Backprop starts at the loss with grad = 1 and walks ______, multiplying ______. (Fill the blanks.)</div>
+</div>
+
+<!-- ════════ 13 ════════ -->
+<div class="ch" id="c13">
+<span class="ch-num">CHAPTER 13</span>
+<h2>Gradient descent &amp; the learning rate</h2>
+<p>Now that each weight has a grad, we use it to actually update the weight. The rule:</p>
+<div class="def"><b>Gradient descent</b> — the update step: <code>new weight = old weight − (learning rate × grad)</code>. The minus sign steps the weight <em>against</em> its grad — i.e. downhill, toward less loss.</div>
+<div class="def"><b>Learning rate</b> — how big a step we take. A small number like <code>0.1</code>. Too big → we overshoot and the loss explodes. Too small → training crawls.</div>
+<p>Update our <code>w=4</code> (grad −12), learning rate 0.1:</p>
+<div class="worked">
+new w = 4 − (0.1 × −12) = 4 − (−1.2) = 4 + 1.2 = <span class="hl">5.2</span><br>
+new loss = (5.2 − 10)² = <span class="hl">23.04</span>   (was 36 — it dropped!)
+</div>
+<p>One step and the loss fell from 36 → 23. The weight moved toward 10, exactly like the grad's sign said. Picture it as a ball rolling downhill into a valley — the grad is the slope, the learning rate is the step size.</p>
+<div class="sayback"><b>✅ Say it back:</b> Why is there a <em>minus</em> sign in the update rule? And what happens if the learning rate is too big?</div>
+</div>
+
+<!-- ════════ 14 ════════ -->
+<div class="ch" id="c14">
+<span class="ch-num">CHAPTER 14</span>
+<h2>The training loop</h2>
+<p>Put it all together. <strong>Training = repeating four steps over and over:</strong></p>
+<div class="card">
+<p style="margin:0"><span class="pill">1. Forward</span> run inputs through → get prediction (Ch 7)</p>
+<p style="margin:10px 0 0"><span class="pill">2. Loss</span> measure how wrong (Ch 8)</p>
+<p style="margin:10px 0 0"><span class="pill">3. Backward</span> backprop fills every weight's grad (Ch 12)</p>
+<p style="margin:10px 0 0"><span class="pill">4. Update</span> nudge every weight downhill (Ch 13)</p>
+<p style="margin:10px 0 0;color:var(--muted)">…then repeat. Each loop, the loss gets a little smaller.</p>
+</div>
+
+<h3>Watch it happen</h3>
+<p>This widget runs the simplest network (<code>w</code> learning to reach 10). Press <b>Auto</b> and watch the loss fall to ~0 and the weight climb to ~10.</p>
+<div class="card">
+  <div class="ctrl"><label>learning rate</label>
+    <select id="lr"><option value="0.05">0.05</option><option value="0.1" selected>0.1</option><option value="0.5">0.5</option><option value="1.05">1.05 (too big!)</option></select>
+    <button id="tstep">One step</button><button class="ghost" id="tauto">▶ Auto</button><button class="ghost" id="treset">Reset</button>
+  </div>
+  <div class="readout" id="trainOut"></div>
+</div>
+<div class="def"><b>Epoch</b> — one full pass of training over all your examples. Training usually takes many epochs.</div>
+<div class="sayback"><b>✅ Say it back:</b> Name the four steps of the training loop, in order.</div>
+</div>
+
+<!-- ════════ 15 ════════ -->
+<div class="ch" id="c15">
+<span class="ch-num">CHAPTER 15</span>
+<h2>Batches &amp; epochs</h2>
+<p>Real datasets have millions of examples. Running all of them before each update is slow. So we use <span class="term">batches</span>.</p>
+<div class="def"><b>Batch (minibatch)</b> — a small handful of examples (say 32) used for one training step. We compute the loss on the batch, update the weights, then grab the next batch.</div>
+<div class="def"><b>Epoch</b> — one full sweep through <em>all</em> the batches (i.e. all the data once). Models train for many epochs.</div>
+<p>Why batches? Two reasons: (1) it fits in memory, and (2) the little bit of randomness from using different batches actually helps the network learn better. Most training you'll ever see is: <em>for each epoch → for each batch → forward, loss, backward, update.</em></p>
+<div class="sayback"><b>✅ Say it back:</b> What's the difference between a batch and an epoch?</div>
+</div>
+
+<!-- ════════ 16 ════════ -->
+<div class="ch" id="c16">
+<span class="ch-num">CHAPTER 16</span>
+<h2>Overfitting &amp; generalization</h2>
+<p>The real goal isn't to do well on the examples we trained on — it's to do well on <strong>new, unseen</strong> data. That ability is called <span class="term">generalization</span>.</p>
+<div class="def"><b>Overfitting</b> — when the network <em>memorizes</em> the training examples instead of learning the general pattern. It aces data it has seen and fails on new data. Like a student who memorized the answer key but didn't learn the subject.</div>
+<p>To catch this, we split our data into three piles:</p>
+<table>
+  <tr><th>split</th><th>used for</th></tr>
+  <tr><td><b>training set</b></td><td>the network learns from this</td></tr>
+  <tr><td><b>validation set</b></td><td>we check on this <em>during</em> training to tune settings &amp; spot overfitting</td></tr>
+  <tr><td><b>test set</b></td><td>the final, honest grade — touched only once, at the very end</td></tr>
+</table>
+<p>The tell-tale sign of overfitting: training loss keeps dropping, but validation loss starts <em>rising</em>. That gap = memorizing, not learning.</p>
+<div class="sayback"><b>✅ Say it back:</b> What is overfitting, and why do we keep a separate test set?</div>
+</div>
+
+<!-- ════════ 17 ════════ -->
+<div class="ch" id="c17">
+<span class="ch-num">CHAPTER 17</span>
+<h2>Parameters vs hyperparameters</h2>
+<p>Two similar words, very different meanings:</p>
+<div class="def"><b>Parameters</b> — the numbers the network <em>learns</em> by itself (the weights &amp; biases). You don't set these; training does.</div>
+<div class="def"><b>Hyperparameters</b> — the settings <em>you</em> choose before training: the learning rate, the number of layers, the number of neurons per layer, the batch size, how many epochs. Tuning these well is a big part of the job.</div>
+<table>
+  <tr><th></th><th>who sets it</th><th>examples</th></tr>
+  <tr><td><b>parameter</b></td><td>the network (via training)</td><td>weights, biases</td></tr>
+  <tr><td><b>hyperparameter</b></td><td>you (before training)</td><td>learning rate, #layers, batch size</td></tr>
+</table>
+<div class="sayback"><b>✅ Say it back:</b> Is the learning rate a parameter or a hyperparameter? Who sets the weights?</div>
+</div>
+
+<!-- ════════ 18 ════════ -->
+<div class="ch" id="c18">
+<span class="ch-num">CHAPTER 18</span>
+<h2>The whole picture (one paragraph)</h2>
+<div class="card">
+<p style="margin:0">A neural network is built from <span class="term">neurons</span>, grouped into <span class="term">layers</span>. Each neuron does <strong>weighted sum + bias → activation</strong>. Running inputs through all the layers is the <span class="term">forward pass</span>, giving a prediction. A <span class="term">loss</span> measures how wrong that prediction is. The weights start random, so the loss is high. <span class="term">Backpropagation</span> walks backward from the loss, multiplying local rates (the chain rule), to compute each weight's <span class="term">gradient</span> — which way and how much it affects the loss. <span class="term">Gradient descent</span> then nudges every weight a small <span class="term">learning-rate</span>-sized step downhill. Repeat this loop over many <span class="term">batches</span> and <span class="term">epochs</span>, and the loss falls — the network learns. We watch a <span class="term">validation set</span> to avoid <span class="term">overfitting</span>, so it <span class="term">generalizes</span> to new data. The learned <span class="term">weights and biases</span> are the <span class="term">parameters</span>; the settings we chose are <span class="term">hyperparameters</span>.</p>
+</div>
+<div class="callout good"><b>If you can read that paragraph and understand every word, you understand neural networks.</b> That's the entire foundation — the same machinery scales up to GPT.</div>
+</div>
+
+<!-- ════════ 19 ════════ -->
+<div class="ch" id="c19">
+<span class="ch-num">CHAPTER 19</span>
+<h2>Glossary (every term, one line)</h2>
+<table>
+  <tr><td><b>Neuron</b></td><td>the basic unit: weighted sum of inputs + bias, then activation</td></tr>
+  <tr><td><b>Weight</b></td><td>a learned number on an input saying how much it matters</td></tr>
+  <tr><td><b>Bias</b></td><td>a learned number inside a neuron, added after the weighted sum</td></tr>
+  <tr><td><b>Weighted sum</b></td><td>each input × its weight, all added together</td></tr>
+  <tr><td><b>Activation (ReLU/sigmoid/softmax)</b></td><td>the "bend" that adds non-linearity</td></tr>
+  <tr><td><b>Layer</b></td><td>a row of neurons; hidden layers are the middle ones</td></tr>
+  <tr><td><b>Deep learning</b></td><td>a network with many hidden layers</td></tr>
+  <tr><td><b>Forward pass / inference</b></td><td>running inputs through to get a prediction</td></tr>
+  <tr><td><b>Loss / error</b></td><td>one number for how wrong the prediction is</td></tr>
+  <tr><td><b>data</b></td><td>the current value in a box</td></tr>
+  <tr><td><b>grad / gradient</b></td><td>how much a number affects the loss (sign = direction, size = strength)</td></tr>
+  <tr><td><b>Backpropagation</b></td><td>walking backward from the loss, multiplying local rates, to fill every grad</td></tr>
+  <tr><td><b>Chain rule</b></td><td>rates multiply along a chain of steps</td></tr>
+  <tr><td><b>Gradient descent</b></td><td>new = old − learning_rate × grad (step downhill)</td></tr>
+  <tr><td><b>Learning rate</b></td><td>how big each update step is</td></tr>
+  <tr><td><b>Training loop</b></td><td>forward → loss → backward → update, repeated</td></tr>
+  <tr><td><b>Batch / epoch</b></td><td>a handful of examples / one full pass over all data</td></tr>
+  <tr><td><b>Overfitting</b></td><td>memorizing training data instead of learning the pattern</td></tr>
+  <tr><td><b>Generalization</b></td><td>doing well on new, unseen data</td></tr>
+  <tr><td><b>Parameters</b></td><td>all weights + biases (the learned knowledge)</td></tr>
+  <tr><td><b>Hyperparameters</b></td><td>settings you choose: learning rate, #layers, batch size…</td></tr>
+</table>
+</div>
+
+<div class="navlinks">
+  <a href="index.html">‹ Visual intro</a>
+  <a href="../train-your-own-gpt/course.html">Course hub</a>
+  <a href="transformers.html">Next: Transformers &amp; LLMs ›</a>
+</div>
+<p class="footer">Read it again anytime. Say each ✅ back out loud — that's when it sticks. 🧠</p>
+</div>
+
+<script>
+// neuron widget
+const N=['x1','x2','w1','w2','bb'];
+function act(n,z){if(n==='relu')return Math.max(0,z);if(n==='sigmoid')return 1/(1+Math.exp(-z));return z;}
+function f(n){return (Math.round(n*1000)/1000).toFixed(3);}
+function neuron(){
+  const v={};N.forEach(id=>{v[id]=parseFloat(document.getElementById(id).value);document.getElementById(id+'v').textContent=v[id].toFixed(1);});
+  const a=document.getElementById('act').value;
+  const s=v.x1*v.w1+v.x2*v.w2, z=s+v.bb, y=act(a,z);
+  document.getElementById('neuronOut').innerHTML=
+    `1) weighted sum: ${f(v.x1)}×${f(v.w1)} + ${f(v.x2)}×${f(v.w2)} = <b>${f(s)}</b><br>`+
+    `2) + bias: ${f(s)} + ${f(v.bb)} = <b>${f(z)}</b><br>`+
+    `3) ${a}(${f(z)}) = <span class="big">${f(y)}</span>`;
+}
+N.forEach(id=>document.getElementById(id).addEventListener('input',neuron));
+document.getElementById('act').addEventListener('change',neuron);neuron();
+
+// training widget
+let tw=4.0,tstep=0,ttimer=null;
+function trainRender(){
+  const lr=parseFloat(document.getElementById('lr').value);
+  const loss=(tw-10)**2, grad=2*(tw-10), nxt=tw-lr*grad;
+  document.getElementById('trainOut').innerHTML=
+    `step ${tstep}<br>weight w = <b>${f(tw)}</b>  (target 10)<br>`+
+    `loss = (w−10)² = <span class="big">${f(loss)}</span><br>`+
+    `grad = 2(w−10) = ${f(grad)}<br>`+
+    `update: w = ${f(tw)} − ${lr}×(${f(grad)}) = <b>${f(nxt)}</b>`;
+  tw=nxt;tstep++;
+}
+function tstop(){if(ttimer){clearInterval(ttimer);ttimer=null;document.getElementById('tauto').textContent='▶ Auto';}}
+document.getElementById('tstep').onclick=()=>{if(tstep<60)trainRender();};
+document.getElementById('treset').onclick=()=>{tstop();tw=4.0;tstep=0;document.getElementById('trainOut').innerHTML='Press “One step” or “Auto”. w starts at 4, should climb to 10.';};
+document.getElementById('tauto').onclick=function(){if(ttimer){tstop();return;}this.textContent='⏸ Pause';ttimer=setInterval(()=>{if(tstep<40&&(tw-10)**2>0.0005)trainRender();else tstop();},500);};
+document.getElementById('treset').onclick();
+</script>
+</body>
+</html>

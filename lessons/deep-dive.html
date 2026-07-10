@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive — Parameters, Gradients &amp; Embeddings in Space</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d2130; --ink:#e8ebf2; --muted:#9aa3b7;
+    --line:#2a2f40; --accent:#5b8cff; --accent2:#7c5cff; --good:#36d399; --warn:#fbbd23;
+    --bad:#f87272; --chip:#232838; --maxw:880px;
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px 120px}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%, rgba(54,211,153,.22), transparent 60%);
+    padding:64px 20px 40px; text-align:center;}
+  header.hero h1{font-size:38px; line-height:1.12; margin:0 0 12px; letter-spacing:-.5px}
+  header.hero p{color:var(--muted); max-width:640px; margin:0 auto; font-size:18px}
+  .badge{display:inline-block; background:var(--chip); border:1px solid var(--line); color:var(--good);
+    padding:6px 14px; border-radius:999px; font-size:13px; letter-spacing:.5px; text-transform:uppercase; margin-bottom:20px}
+  h2{font-size:27px; margin:60px 0 6px; letter-spacing:-.3px; scroll-margin-top:20px}
+  h2 .num{color:var(--good); font-weight:800; margin-right:10px}
+  h3{font-size:19px; margin:30px 0 8px; color:#fff}
+  p{margin:14px 0} .lead{font-size:18px; color:#cfd5e6} .muted{color:var(--muted)} strong{color:#fff}
+  .term{color:var(--good); font-weight:600}
+  code{background:#0b0d13; border:1px solid var(--line); padding:2px 7px; border-radius:6px;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:14px; color:#bcd0ff}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; margin:22px 0}
+  .callout{border-left:4px solid var(--good); background:var(--panel2); border-radius:0 12px 12px 0; padding:14px 18px; margin:20px 0}
+  .callout.warn{border-color:var(--warn)} .callout.blue{border-color:var(--accent)} .callout b{color:#fff}
+  .center{text-align:center} svg{max-width:100%; height:auto; display:block; margin:0 auto}
+  .fig-cap{text-align:center; color:var(--muted); font-size:14px; margin-top:10px}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14.5px}
+  th,td{border:1px solid var(--line); padding:8px 11px; text-align:left}
+  th{background:var(--panel2); color:#fff}
+  .mono{font-family:"SF Mono",ui-monospace,monospace}
+  .toc{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:24px}
+  .toc a{background:var(--chip); border:1px solid var(--line); color:var(--ink); text-decoration:none; padding:7px 13px; border-radius:999px; font-size:13px}
+  .toc a:hover{border-color:var(--good); color:var(--good)}
+  button{background:var(--good); color:#04210f; border:0; border-radius:10px; padding:10px 18px; font-size:15px; font-weight:700; cursor:pointer}
+  button.ghost{background:var(--chip); border:1px solid var(--line); color:var(--ink); font-weight:600}
+  button:active{transform:translateY(1px)}
+  select{background:#0b0d13; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px}
+  .readout{font-family:"SF Mono",ui-monospace,monospace; font-size:14.5px; line-height:1.85; background:#0b0d13; border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:14px}
+  .readout .big{font-size:20px; color:var(--good)}
+  .ctrl{display:flex; align-items:center; gap:12px; margin:10px 0; flex-wrap:wrap}
+  .ctrl label{color:var(--muted); font-size:14px}
+  .pill{display:inline-block; padding:1px 8px; border-radius:6px; background:var(--chip); border:1px solid var(--line); font-size:13px}
+  .dimbox{display:inline-block; background:#0b0d13; border:1px solid var(--line); border-radius:7px; padding:4px 9px; margin:2px; font-family:"SF Mono",monospace; font-size:13px}
+  #space3d{touch-action:none; cursor:grab; background:#0b0d13; border:1px solid var(--line); border-radius:14px}
+  #space3d:active{cursor:grabbing}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .navlinks{display:flex; justify-content:space-between; margin-top:50px; font-size:15px}
+  .navlinks a{color:var(--good); text-decoration:none}
+  ul.clean{padding-left:20px} ul.clean li{margin:6px 0}
+  .footer{text-align:center; color:var(--muted); margin-top:80px; font-size:14px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="badge">Deep Dive · Numbers + Space</div>
+  <h1>Parameters, Gradients<br>&amp; Embeddings — for real</h1>
+  <p>Three fuzzy spots, cleared up with <strong>actual numbers</strong> and pictures you can drag. No hand-waving.</p>
+  <nav class="toc">
+    <a href="#pw">1 · Parameters vs Weights</a>
+    <a href="#gd">2 · Gradient vs Gradient Descent</a>
+    <a href="#emb">3 · Vectors &amp; Embeddings in 3D ★</a>
+  </nav>
+</header>
+<div class="wrap">
+
+<!-- 1 -->
+<h2 id="pw"><span class="num">1</span>Parameters vs Weights</h2>
+<p class="lead">Short answer: <strong>weights and biases are the two <em>kinds</em> of parameter.</strong> "Parameters" is the umbrella word for all the learnable numbers; weights are the big group, biases are the small group.</p>
+
+<table>
+  <tr><th>Term</th><th>What it is</th><th>Lives on…</th></tr>
+  <tr><td><span class="term">Weight</span></td><td>A number on a <em>connection</em> between two neurons — "how much does this input matter?"</td><td>every arrow/line</td></tr>
+  <tr><td><span class="term">Bias</span></td><td>A single number <em>added inside</em> a neuron — shifts its output up/down</td><td>every neuron (one each)</td></tr>
+  <tr><td><span class="term">Parameter</span></td><td>The umbrella term: <b>every weight + every bias</b> = all the learnable numbers</td><td>the whole model</td></tr>
+</table>
+<p class="muted">In casual speech people say "weights" to mean all parameters (e.g. "the model's weights"). Strictly: <code>parameters = weights + biases</code>. When you hear "7 billion parameters," that's every weight and bias counted together.</p>
+
+<h3>Count them yourself, with real numbers</h3>
+<p>Here's a tiny network: 2 inputs → 3 hidden neurons → 1 output. Every line is a weight; every neuron in the hidden/output layers has a bias. The numbers shown are made-up "trained" values.</p>
+
+<div class="card center">
+<svg viewBox="0 0 680 300" width="680" role="img" aria-label="Tiny network with labeled weights">
+  <!-- edges input->hidden with weight labels -->
+  <g stroke="#7c5cff" stroke-width="1.6" font-size="11" fill="#b39dff" font-family="monospace">
+    <line x1="80" y1="110" x2="300" y2="60"/><text x="180" y="78">0.4</text>
+    <line x1="80" y1="110" x2="300" y2="150"/><text x="175" y="135">-0.7</text>
+    <line x1="80" y1="110" x2="300" y2="240"/><text x="175" y="190">0.2</text>
+    <line x1="80" y1="200" x2="300" y2="60"/><text x="205" y="120">0.9</text>
+    <line x1="80" y1="200" x2="300" y2="150"/><text x="205" y="178">0.1</text>
+    <line x1="80" y1="200" x2="300" y2="240"/><text x="205" y="228">-0.5</text>
+  </g>
+  <!-- edges hidden->output -->
+  <g stroke="#36d399" stroke-width="1.8" font-size="11" fill="#8ff0c4" font-family="monospace">
+    <line x1="300" y1="60"  x2="560" y2="150"/><text x="430" y="95">0.6</text>
+    <line x1="300" y1="150" x2="560" y2="150"/><text x="430" y="143">-0.3</text>
+    <line x1="300" y1="240" x2="560" y2="150"/><text x="430" y="205">0.8</text>
+  </g>
+  <!-- nodes -->
+  <g font-family="-apple-system,sans-serif" font-size="12">
+    <circle cx="80" cy="110" r="22" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/><text x="80" y="114" fill="#fff" text-anchor="middle">x₁</text>
+    <circle cx="80" cy="200" r="22" fill="#1d2130" stroke="#5b8cff" stroke-width="2"/><text x="80" y="204" fill="#fff" text-anchor="middle">x₂</text>
+    <circle cx="300" cy="60"  r="22" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="300" y="64" fill="#fff" text-anchor="middle">h₁</text>
+    <circle cx="300" cy="150" r="22" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="300" y="154" fill="#fff" text-anchor="middle">h₂</text>
+    <circle cx="300" cy="240" r="22" fill="#1d2130" stroke="#7c5cff" stroke-width="2"/><text x="300" y="244" fill="#fff" text-anchor="middle">h₃</text>
+    <circle cx="560" cy="150" r="24" fill="#1d2130" stroke="#36d399" stroke-width="2.5"/><text x="560" y="154" fill="#fff" text-anchor="middle">y</text>
+    <!-- bias tags -->
+    <text x="300" y="32" fill="#fbbd23" font-size="11" text-anchor="middle" font-family="monospace">b=0.1</text>
+    <text x="338" y="150" fill="#fbbd23" font-size="11" font-family="monospace">b=-0.2</text>
+    <text x="300" y="278" fill="#fbbd23" font-size="11" text-anchor="middle" font-family="monospace">b=0.3</text>
+    <text x="560" y="118" fill="#fbbd23" font-size="11" text-anchor="middle" font-family="monospace">b=0.05</text>
+  </g>
+</svg>
+<div class="fig-cap">Purple/green numbers = weights (one per line). Yellow = biases (one per neuron).</div>
+</div>
+
+<div class="readout">
+Counting the parameters in this tiny net:<br>
+&nbsp;&nbsp;weights input→hidden: 2 × 3 = <b>6</b><br>
+&nbsp;&nbsp;weights hidden→output: 3 × 1 = <b>3</b><br>
+&nbsp;&nbsp;biases (h₁,h₂,h₃,y): <b>4</b><br>
+&nbsp;&nbsp;──────────────<br>
+&nbsp;&nbsp;total parameters = 6 + 3 + 4 = <span class="big">13</span>
+</div>
+<div class="callout">
+<b>Scale it up:</b> GPT-3 does this exact counting across ~96 layers of thousands of neurons each → <b>175,000,000,000</b> numbers. Same idea, just astronomically more lines and neurons. Each of those 175B numbers was set by the process in Section 2 ↓</div>
+
+<!-- 2 -->
+<h2 id="gd"><span class="num">2</span>Gradient vs Gradient Descent</h2>
+<p class="lead">A <span class="term">gradient</span> is a <em>number</em> (a slope). <span class="term">Gradient descent</span> is the <em>action</em> of using that number to step downhill. One is the compass; the other is the walking.</p>
+
+<ul class="clean">
+  <li><strong>Gradient</strong> = "if I nudge this weight up a little, how much does the error change, and in which direction?" Its <em>sign</em> tells you which way is uphill; its <em>size</em> tells you how steep. For a whole model with millions of weights, the gradient is one slope <em>per weight</em> — a long list of numbers (yes, a <span class="term">vector</span> — ties into Section 3).</li>
+  <li><strong>Gradient descent</strong> = the update rule applied over and over:<br>
+  <code>new weight = old weight − (learning rate × gradient)</code><br>
+  The minus sign is the whole trick: gradient points <em>uphill</em>, so we step the opposite way, downhill, toward less error.</li>
+</ul>
+
+<h3>Watch it with real numbers</h3>
+<p>Say the error depends on one weight <code>w</code> by the bowl-shaped curve <code>loss = (w − 3)²</code>. The lowest error is obviously at <code>w = 3</code>. For this curve the gradient (slope) is <code>2 × (w − 3)</code>. Start at <code>w = 8</code> and let gradient descent find the bottom — every column is a real computed number.</p>
+
+<div class="card">
+  <div class="ctrl">
+    <label>learning rate</label>
+    <select id="lr">
+      <option value="0.1">0.1 (small steps)</option>
+      <option value="0.3" selected>0.3 (good)</option>
+      <option value="0.7">0.7 (big)</option>
+      <option value="1.05">1.05 (too big — diverges!)</option>
+    </select>
+    <button id="gdStep">Take one step</button>
+    <button id="gdAuto" class="ghost">Auto</button>
+    <button id="gdReset" class="ghost">Reset</button>
+  </div>
+  <table id="gdTable">
+    <tr><th>step</th><th>w (weight)</th><th>loss = (w−3)²</th><th>gradient = 2(w−3)</th><th>next w = w − lr·grad</th></tr>
+  </table>
+  <p class="muted" style="font-size:13px;margin-bottom:0">Watch the <b>loss</b> column shrink toward 0 and <b>w</b> march toward 3. Notice the gradient shrinks as you near the bottom (the curve flattens), so the steps get gentler automatically. Try the <b>1.05</b> learning rate to see steps overshoot and the loss <em>explode</em> — that's why learning rate matters.</p>
+</div>
+<div class="callout warn">
+<b>The link to Part 1's rolling ball:</b> the ball's position = <code>w</code>; the hill's steepness under it = the <b>gradient</b>; each roll-step = one line of this table. Now you've seen the same thing as a picture <em>and</em> as numbers.</div>
+
+<!-- 3 -->
+<h2 id="emb"><span class="num">3</span>Vectors &amp; Embeddings — in numbers and in 3D space ★</h2>
+<p class="lead">A <span class="term">vector</span> is nothing scary: just an <strong>ordered list of numbers</strong>. An <span class="term">embedding</span> is the vector that represents a word's meaning. "In space" just means: treat those numbers as coordinates and plot the point.</p>
+
+<h3>First, "in numbers"</h3>
+<p>A 3-number (3-dimensional) vector <code>[x, y, z]</code> is a point in 3D space — same as a pin on a map but with a third axis. Here are toy 3-D embeddings for a few words:</p>
+<div class="center" style="margin:10px 0">
+  <span class="dimbox">cat = [0.80, 0.60, 0.20]</span>
+  <span class="dimbox">dog = [0.90, 0.50, 0.30]</span>
+  <span class="dimbox">king = [-0.70, 0.80, 0.30]</span>
+  <span class="dimbox">apple = [0.10, -0.70, 0.60]</span>
+</div>
+<p class="muted">Real embeddings aren't 3 numbers — they're hundreds or thousands (e.g. <code>[0.02, -0.41, …, 0.77]</code> with 1536 entries). We can't <em>see</em> 1536 dimensions, so this page uses 3 so it fits in space you can actually look at. The idea is identical; there are just more numbers.</p>
+
+<h3>Now, "in space" — drag to rotate</h3>
+<p>Below, each word's 3 numbers are plotted as a point in 3D. <strong>Drag</strong> to spin it. Notice meaning becomes <em>geography</em>: animals huddle together, royalty sits apart, food drops below. Closeness = similar meaning.</p>
+
+<div class="card">
+  <div class="center">
+    <svg id="space3d" viewBox="0 0 560 420" width="560" height="420"></svg>
+  </div>
+  <div class="center" style="margin-top:12px">
+    <button id="spin" >Pause spin</button>
+    <button id="resetView" class="ghost">Reset view</button>
+  </div>
+
+  <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+  <h3 style="margin-top:0">Measure "closeness" yourself</h3>
+  <p class="muted" style="margin-top:0">Pick two words. We compute the straight-line <b>distance</b> between their points (smaller = more similar in meaning). This exact "find the nearest vectors" operation is what a <span class="term">vector database</span> does in RAG.</p>
+  <div class="ctrl">
+    <label>word A</label><select id="wA"></select>
+    <label>word B</label><select id="wB"></select>
+  </div>
+  <div class="readout" id="distOut"></div>
+</div>
+
+<div class="callout blue">
+<b>Why this is the whole point:</b> once meaning is numbers in space, the computer can do <em>math</em> on meaning — measure similarity (distance), find related items (nearest points), even do analogies (<code>king − man + woman ≈ queen</code> is literally vector subtraction/addition). That's the engine under search, recommendations, RAG, and an LLM's understanding of words.</div>
+
+<div class="navlinks">
+  <a href="index.html">‹ Part 1 · Neural Networks</a>
+  <a href="transformers.html">Part 2 · Transformers ›</a>
+</div>
+<p class="footer">Numbers on the left, space on the right — same thing, two views. 🧭</p>
+</div>
+
+<script>
+// ---------- 2. Gradient descent with numbers ----------
+let gw=8, gstep=0;
+function grad(w){return 2*(w-3);}
+function loss(w){return (w-3)*(w-3);}
+function fmt(n){return (Math.round(n*1000)/1000);}
+function gdRowReset(){
+  gw=8; gstep=0;
+  const t=document.getElementById('gdTable');
+  t.innerHTML='<tr><th>step</th><th>w (weight)</th><th>loss = (w−3)²</th><th>gradient = 2(w−3)</th><th>next w = w − lr·grad</th></tr>';
+  addRow();
+}
+function addRow(){
+  const lr=parseFloat(document.getElementById('lr').value);
+  const g=grad(gw), L=loss(gw), nxt=gw - lr*g;
+  const tr=document.createElement('tr');
+  const diverge=Math.abs(nxt)>1e4;
+  tr.innerHTML=`<td class="mono">${gstep}</td><td class="mono">${fmt(gw)}</td>`+
+    `<td class="mono" style="color:${L<0.01?'#36d399':L>20?'#f87272':'#e8ebf2'}">${fmt(L)}</td>`+
+    `<td class="mono">${fmt(g)}</td><td class="mono">${diverge?'💥 exploding':fmt(nxt)}</td>`;
+  document.getElementById('gdTable').appendChild(tr);
+  gw=nxt; gstep++;
+}
+let gdTimer=null;
+document.getElementById('gdStep').onclick=()=>{ if(gstep<40) addRow(); };
+document.getElementById('gdReset').onclick=()=>{ gdRowReset(); if(gdTimer){clearInterval(gdTimer);gdTimer=null;document.getElementById('gdAuto').textContent='Auto';} };
+document.getElementById('gdAuto').onclick=function(){
+  if(gdTimer){clearInterval(gdTimer);gdTimer=null;this.textContent='Auto';return;}
+  this.textContent='Stop';
+  gdTimer=setInterval(()=>{ if(gstep>=20 || (Math.abs(loss(gw))<1e-4)){clearInterval(gdTimer);gdTimer=null;this.textContent='Auto'; if(loss(gw)<1e-4)addRow(); return;} addRow(); },500);
+};
+document.getElementById('lr').onchange=gdRowReset;
+gdRowReset();
+
+// ---------- 3. 3D embeddings ----------
+const W=[
+  {w:"cat",   v:[ 0.80, 0.60, 0.20], c:"#36d399"},
+  {w:"dog",   v:[ 0.90, 0.50, 0.30], c:"#36d399"},
+  {w:"tiger", v:[ 0.85, 0.70,-0.10], c:"#36d399"},
+  {w:"horse", v:[ 0.70, 0.40, 0.45], c:"#36d399"},
+  {w:"king",  v:[-0.70, 0.80, 0.30], c:"#5b8cff"},
+  {w:"queen", v:[-0.60, 0.85, 0.42], c:"#5b8cff"},
+  {w:"man",   v:[-0.80, 0.55, 0.20], c:"#5b8cff"},
+  {w:"woman", v:[-0.65, 0.58, 0.35], c:"#5b8cff"},
+  {w:"apple", v:[ 0.10,-0.70, 0.60], c:"#fbbd23"},
+  {w:"banana",v:[ 0.20,-0.65, 0.72], c:"#fbbd23"},
+  {w:"pizza", v:[ 0.00,-0.80, 0.50], c:"#fbbd23"}
+];
+const svg=document.getElementById('space3d');
+const CX=280, CY=210, SCALE=150;
+let ry=0.6, rx=-0.35, spinning=true, dragging=false, lastX=0, lastY=0;
+function rotate(p){
+  let [x,y,z]=p;
+  // rotate around Y
+  let x1=x*Math.cos(ry)+z*Math.sin(ry);
+  let z1=-x*Math.sin(ry)+z*Math.cos(ry);
+  // rotate around X
+  let y1=y*Math.cos(rx)-z1*Math.sin(rx);
+  let z2=y*Math.sin(rx)+z1*Math.cos(rx);
+  return [x1,y1,z2];
+}
+function project(p){
+  const [x,y,z]=rotate(p);
+  return {sx:CX+x*SCALE, sy:CY-y*SCALE, depth:z};
+}
+function draw(){
+  // axes
+  let s='';
+  const axes=[ {a:[-1,0,0],b:[1,0,0],lbl:'x'}, {a:[0,-1,0],b:[0,1,0],lbl:'y'}, {a:[0,0,-1],b:[0,0,1],lbl:'z'} ];
+  axes.forEach(ax=>{
+    const A=project(ax.a), B=project(ax.b);
+    s+=`<line x1="${A.sx}" y1="${A.sy}" x2="${B.sx}" y2="${B.sy}" stroke="#2a2f40" stroke-width="1"/>`;
+    s+=`<text x="${B.sx}" y="${B.sy}" fill="#5a627a" font-size="11" font-family="monospace">${ax.lbl}</text>`;
+  });
+  // points sorted back-to-front
+  const pts=W.map(o=>({o, p:project(o.v)})).sort((a,b)=>a.p.depth-b.p.depth);
+  pts.forEach(({o,p})=>{
+    const r=5+ (p.depth+1)*2.2;              // closer = bigger
+    const op=0.45+(p.depth+1)*0.27;          // closer = more opaque
+    s+=`<circle cx="${p.sx}" cy="${p.sy}" r="${r}" fill="${o.c}" opacity="${Math.min(op,1)}"/>`;
+    s+=`<text x="${p.sx+r+3}" y="${p.sy+4}" fill="#cfd5e6" font-size="13" font-family="-apple-system" opacity="${Math.min(op+0.2,1)}">${o.w}</text>`;
+  });
+  svg.innerHTML=s;
+}
+function tick(){ if(spinning && !dragging){ ry+=0.008; } draw(); requestAnimationFrame(tick); }
+tick();
+// drag
+svg.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;svg.setPointerCapture(e.pointerId);});
+svg.addEventListener('pointermove',e=>{ if(!dragging)return; ry+=(e.clientX-lastX)*0.01; rx+=-(e.clientY-lastY)*0.01; lastX=e.clientX; lastY=e.clientY; });
+svg.addEventListener('pointerup',e=>{dragging=false;});
+document.getElementById('spin').onclick=function(){ spinning=!spinning; this.textContent=spinning?'Pause spin':'Resume spin'; };
+document.getElementById('resetView').onclick=()=>{ ry=0.6; rx=-0.35; };
+
+// distance picker
+const selA=document.getElementById('wA'), selB=document.getElementById('wB');
+W.forEach((o,i)=>{ selA.add(new Option(o.w,i)); selB.add(new Option(o.w,i)); });
+selA.value=0; selB.value=1; // cat, dog
+function dist(a,b){ return Math.sqrt(a.reduce((s,_,i)=>s+(a[i]-b[i])**2,0)); }
+function renderDist(){
+  const A=W[+selA.value], B=W[+selB.value];
+  const d=dist(A.v,B.v);
+  let verdict = d<0.5 ? '<b style="color:#36d399">very close → very similar meaning</b>'
+              : d<1.3 ? '<b style="color:#fbbd23">medium distance → somewhat related</b>'
+              : '<b style="color:#f87272">far apart → unrelated meanings</b>';
+  document.getElementById('distOut').innerHTML=
+    `${A.w} = [${A.v.join(', ')}]<br>${B.w} = [${B.v.join(', ')}]<br><br>`+
+    `distance = √[ (${fmt(A.v[0]-B.v[0])})² + (${fmt(A.v[1]-B.v[1])})² + (${fmt(A.v[2]-B.v[2])})² ]<br>`+
+    `&nbsp;&nbsp;= <span class="big">${fmt(d)}</span> &nbsp; ${verdict}`;
+}
+selA.onchange=renderDist; selB.onchange=renderDist; renderDist();
+</script>
+</body>
+</html>
